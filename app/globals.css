@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "react-toastify/dist/ReactToastify.css";
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: #fdfaf7;
+}
+
+#__next,
+body {
+  min-height: 100vh;
+}
