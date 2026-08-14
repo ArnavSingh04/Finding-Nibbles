@@ -4,6 +4,16 @@ AI-driven dining recommendations — decide **what** and **where** to eat based 
 preferences, dietary needs, and location. This is the **Next.js + Node** rewrite of the
 original Meteor application.
 
+## ✨ Highlights
+
+- **Personalized dashboard** — quick actions, daily calorie/goal stats, recent searches, and AI picks the moment you log in.
+- **AI dish recommendations (Google Gemini)** — suggestions tuned to your swipe history and diet, each with a "why", nutrition estimate, and dietary badges; add any pick straight to your meal plan.
+- **Map discovery (Google Maps/Places)** — nearby restaurants with cuisine, rating, open-now, and distance filters, plus save-to-favourites and add-to-trip.
+- **Meal planner** — log meals by day and track calories + macros against your goals with charts.
+- **Trip planning** — build food itineraries and browse famous dishes by city.
+- **Warm, playful design system** — Poppins/Nunito type, a signature sunset gradient, and a full **light/dark theme** toggle.
+- **Auth** — username *or* email login via NextAuth (bcrypt + JWT), with instant sign-in after registration.
+
 ## Tech stack
 
 | Layer | Technology |

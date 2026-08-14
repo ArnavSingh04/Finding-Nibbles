@@ -1,196 +1,190 @@
 "use client";
 
 import React, { useState } from "react";
-import { Modal, Box as MuiBox, Typography } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Button,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography,
+  Chip,
+} from "@mui/material";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import { toast } from "react-toastify";
 import { CreatePlanModalForm } from "./CreatePlanModalForm";
 import { api } from "@/lib/api-client";
+import { GradientButton } from "@/components/ui/GradientButton";
 
 interface Restaurant {
-    displayName?: { text: string };
-    [key: string]: any;
+  displayName?: { text: string };
+  [key: string]: any;
 }
 
 interface Plan {
-    _id?: string;
-    title: string;
-    restaurants: Restaurant[];
+  _id?: string;
+  title: string;
+  restaurants: Restaurant[];
 }
 
 interface AddToPlanModalProps {
-    open: boolean;
-    onClose: () => void;
-    userPlans: Plan[];
-    selectedRestaurant: Restaurant | null;
-    onPlansChanged?: () => void;
+  open: boolean;
+  onClose: () => void;
+  userPlans: Plan[];
+  selectedRestaurant: Restaurant | null;
+  onPlansChanged?: () => void;
 }
 
+const restaurantName = (r?: Restaurant | null) =>
+  r?.displayName?.text || r?.name || "Unnamed restaurant";
+
 export const AddToPlanModal: React.FC<AddToPlanModalProps> = ({
-    open,
-    onClose,
-    userPlans,
-    selectedRestaurant,
-    onPlansChanged,
+  open,
+  onClose,
+  userPlans,
+  selectedRestaurant,
+  onPlansChanged,
 }) => {
-    const [isCreatingPlan, setIsCreatingPlan] = useState(false);
-    const [newPlanTitle, setNewPlanTitle] = useState("");
-    const [addingToPlanId, setAddingToPlanId] = useState<number | null>(null);
+  const [isCreatingPlan, setIsCreatingPlan] = useState(false);
+  const [addingToPlanId, setAddingToPlanId] = useState<string | null>(null);
 
-    const handleCreatePlan = () => {
-        setIsCreatingPlan(true);
-        setNewPlanTitle("");
-    };
+  const handleClose = () => {
+    onClose();
+    setIsCreatingPlan(false);
+  };
 
-    const handlePlanTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setNewPlanTitle(e.target.value);
-    };
-
-    const handlePlanTitleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (newPlanTitle.trim()) {
-            api.plans.insert({ title: newPlanTitle.trim() })
-                .then(() => {
-                    setIsCreatingPlan(false);
-                    onPlansChanged?.();
-                })
-                .catch((err: any) => {
-                    alert(err.message || err);
-                });
-        }
-    };
-
-    const handleAddToPlan = (planIdx: number) => {
-        const target = userPlans[planIdx];
-        if (
-            selectedRestaurant &&
-            target &&
-            target._id &&
-            !target.restaurants.some(
-                (r) => r.displayName?.text === selectedRestaurant.displayName?.text
-            )
-        ) {
-            api.plans.addRestaurant(target._id, selectedRestaurant)
-                .then(() => {
-                    setAddingToPlanId(planIdx);
-                    setTimeout(() => setAddingToPlanId(null), 1000);
-                    onPlansChanged?.();
-                })
-                .catch((err: any) => {
-                    alert(err.message || err);
-                });
-        }
-    };
-
-    return (
-        <Modal
-            open={open}
-            onClose={() => {
-                onClose();
-                setIsCreatingPlan(false);
-            }}
-            aria-labelledby="add-to-plan-modal-title"
-            aria-describedby="add-to-plan-modal-description"
-        >
-            <MuiBox
-                sx={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: 400,
-                    bgcolor: 'background.paper',
-                    border: '2px solid #C47B4D',
-                    boxShadow: 24,
-                    p: 4,
-                    borderRadius: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    maxHeight: 500,
-                    overflowY: 'auto'
-                }}
-            >
-                <Typography id="add-to-plan-modal-title" variant="h6" component="h2" sx={{ mb: 2 }}>
-                    Travel Plans
-                </Typography>
-
-                {isCreatingPlan ? (
-                    <CreatePlanModalForm
-                        setIsCreatingPlan={setIsCreatingPlan}
-                        selectedRestaurant={selectedRestaurant}
-                        onCreated={onPlansChanged}
-                    />) : (
-                    <button
-                        style={{
-                            marginBottom: "16px",
-                            padding: "10px 24px",
-                            backgroundColor: "#C47B4D",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            fontSize: "16px"
-                        }}
-                        onClick={handleCreatePlan}
-                    >
-                        Create + Add to New Plan
-                    </button>
-                )}
-
-                {/* List of Plans */}
-                <div style={{ width: "100%" }}>
-                    {userPlans.length === 0 && (
-                        <Typography sx={{ color: "#888", mb: 2 }}>No plans yet.</Typography>
-                    )}
-                    {userPlans.map((plan, idx) => (
-                        <MuiBox key={idx} sx={{ mb: 2, border: "1px solid #eee", borderRadius: 1, p: 1 }}>
-                            <details>
-                                <summary style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                    <span>{plan.title}</span>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleAddToPlan(idx);
-                                        }}
-                                        disabled={
-                                            selectedRestaurant === null ||
-                                            plan.restaurants.some(
-                                                (r) => selectedRestaurant !== null && r.displayName?.text === selectedRestaurant.displayName?.text
-                                            )
-                                        }
-                                        style={{
-                                            marginLeft: "8px",
-                                            backgroundColor: addingToPlanId === idx ? "#aaa" : "#C47B4D",
-                                            color: "white",
-                                            border: "none",
-                                            borderRadius: "4px",
-                                            padding: "4px 12px",
-                                            cursor: addingToPlanId === idx ? "default" : "pointer"
-                                        }}
-                                    >
-                                        {plan.restaurants.some(
-                                            (r) => selectedRestaurant !== null && r.displayName?.text === selectedRestaurant.displayName?.text
-                                        )
-                                            ? "Added"
-                                            : addingToPlanId === idx
-                                                ? "Added"
-                                                : "Add"}
-                                    </button>
-                                </summary>
-                                {/* List restaurants in plan */}
-                                {plan.restaurants.length > 0 ? (
-                                    <ul style={{ marginTop: 8, marginBottom: 0, paddingLeft: 16 }}>
-                                        {plan.restaurants.map((r, ridx) => (
-                                            <li key={ridx}>{r?.displayName?.text || "N/A"}</li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <Typography sx={{ color: "#aaa", fontSize: 13, mt: 1 }}>No restaurants in this plan.</Typography>
-                                )}
-                            </details>
-                        </MuiBox>
-                    ))}
-                </div>
-            </MuiBox>
-        </Modal>
+  const isAlreadyInPlan = (plan: Plan) =>
+    !!selectedRestaurant &&
+    plan.restaurants.some(
+      (r) => restaurantName(r) === restaurantName(selectedRestaurant)
     );
+
+  const handleAddToPlan = async (plan: Plan) => {
+    if (!selectedRestaurant || !plan._id || isAlreadyInPlan(plan)) return;
+    setAddingToPlanId(plan._id);
+    try {
+      await api.plans.addRestaurant(plan._id, selectedRestaurant);
+      toast.success(`Added to "${plan.title}"`);
+      onPlansChanged?.();
+    } catch (err: any) {
+      toast.error(err?.message || "Couldn't add to that trip");
+    } finally {
+      setAddingToPlanId(null);
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+      aria-labelledby="add-to-plan-modal-title"
+    >
+      <DialogTitle id="add-to-plan-modal-title" sx={{ fontWeight: 800 }}>
+        Add to a trip
+        {selectedRestaurant && (
+          <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+            {restaurantName(selectedRestaurant)}
+          </Typography>
+        )}
+      </DialogTitle>
+
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {isCreatingPlan ? (
+          <CreatePlanModalForm
+            setIsCreatingPlan={setIsCreatingPlan}
+            selectedRestaurant={selectedRestaurant}
+            onCreated={() => {
+              setIsCreatingPlan(false);
+              onPlansChanged?.();
+            }}
+          />
+        ) : (
+          <GradientButton
+            fullWidth
+            startIcon={<AddRoundedIcon />}
+            onClick={() => setIsCreatingPlan(true)}
+          >
+            Create a new trip
+          </GradientButton>
+        )}
+
+        <div>
+          {userPlans.length === 0 ? (
+            <Typography sx={{ color: "text.secondary", fontStyle: "italic", py: 1 }}>
+              No trips yet — create your first one above.
+            </Typography>
+          ) : (
+            userPlans.map((plan, idx) => {
+              const added = isAlreadyInPlan(plan);
+              const busy = addingToPlanId === plan._id;
+              return (
+                <Accordion
+                  key={plan._id ?? idx}
+                  disableGutters
+                  sx={{
+                    borderRadius: 2,
+                    mb: 1,
+                    border: "1px solid var(--border)",
+                    "&:before": { display: "none" },
+                    boxShadow: "none",
+                  }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+                    <div className="flex w-full items-center justify-between gap-2 pr-2">
+                      <span className="min-w-0 truncate font-semibold">
+                        {plan.title?.trim() || "Untitled trip"}
+                      </span>
+                      {added ? (
+                        <Chip
+                          size="small"
+                          color="success"
+                          icon={<CheckRoundedIcon />}
+                          label="Added"
+                        />
+                      ) : (
+                        <Button
+                          size="small"
+                          variant="contained"
+                          disabled={!selectedRestaurant || busy}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToPlan(plan);
+                          }}
+                          sx={{ textTransform: "none", borderRadius: 2 }}
+                        >
+                          {busy ? "Adding…" : "Add"}
+                        </Button>
+                      )}
+                    </div>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    {plan.restaurants.length > 0 ? (
+                      <ul style={{ margin: 0, paddingLeft: 18 }}>
+                        {plan.restaurants.map((r, ridx) => (
+                          <li key={ridx} style={{ fontSize: 14 }}>
+                            {restaurantName(r)}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <Typography sx={{ color: "text.secondary", fontSize: 13 }}>
+                        No restaurants in this trip yet.
+                      </Typography>
+                    )}
+                  </AccordionDetails>
+                </Accordion>
+              );
+            })
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 };

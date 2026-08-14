@@ -1,7 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { Modal, Box, Typography, Button, TextField, Autocomplete } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Autocomplete,
+  Stack,
+  Divider,
+  Typography,
+} from "@mui/material";
+import { GradientButton } from "@/components/ui/GradientButton";
 
 const MOCK_PREFERENCES = [
   "Vegetarian",
@@ -33,81 +45,99 @@ export const AddPreferenceModal: React.FC<AddPreferenceModalProps> = ({
   const [selectedPref, setSelectedPref] = useState<string | null>(null);
   const [customPref, setCustomPref] = useState("");
 
+  const reset = () => {
+    setSelectedPref(null);
+    setCustomPref("");
+  };
+
+  const handleClose = () => {
+    reset();
+    onClose();
+  };
+
   const handleAdd = () => {
-    if (enableSelectList && selectedPref) {
-      onAdd(selectedPref);
-      setSelectedPref(null);
-      setCustomPref("");
+    // Prefer the custom input when the user has typed something.
+    if (enableCustomInput && customPref.trim()) {
+      onAdd(customPref.trim());
+      reset();
       onClose();
       return;
     }
-    if (enableCustomInput && customPref.trim()) {
-      onAdd(customPref.trim());
-      setSelectedPref(null);
-      setCustomPref("");
+    if (enableSelectList && selectedPref) {
+      onAdd(selectedPref);
+      reset();
       onClose();
       return;
     }
   };
 
+  const canAdd =
+    (enableCustomInput && customPref.trim().length > 0) ||
+    (enableSelectList && !!selectedPref);
+
   return (
-    <Modal open={open} onClose={onClose}>
-      <Box
-        sx={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          bgcolor: "background.paper",
-          borderRadius: 3,
-          boxShadow: 24,
-          p: 4,
-          minWidth: 320,
-          maxWidth: 400,
-        }}
-      >
-        <Typography variant="h6" mb={2} fontWeight={600}>
-          Add Food Preference
-        </Typography>
-        {enableSelectList && (
-          <Autocomplete
-            options={MOCK_PREFERENCES}
-            value={selectedPref}
-            onChange={(_, value) => setSelectedPref(value)}
-            renderInput={(params) => (
-              <TextField {...params} label="Select a preference" variant="outlined" fullWidth sx={{ mb: 2 }} />
-            )}
-            sx={{ mb: 2 }}
-          />
-        )}
-        {enableCustomInput && (
-          <TextField
-            label="Or type your own"
-            value={customPref}
-            onChange={(e) => setCustomPref(e.target.value)}
-            variant="outlined"
-            fullWidth
-            sx={{ mb: 2 }}
-            disabled={!!selectedPref}
-          />
-        )}
-        <Box display="flex" justifyContent="flex-end" gap={1}>
-          <Button onClick={onClose} variant="outlined" color="secondary">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleAdd}
-            variant="contained"
-            disabled={
-              (enableSelectList && !selectedPref && (!enableCustomInput || !customPref.trim())) ||
-              (enableCustomInput && !customPref.trim() && (!enableSelectList || !selectedPref))
-            }
-          >
-            Add
-          </Button>
-        </Box>
-      </Box>
-    </Modal>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+    >
+      <DialogTitle sx={{ fontWeight: 800 }}>Add a food preference</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          {enableSelectList && (
+            <Autocomplete
+              options={MOCK_PREFERENCES}
+              value={selectedPref}
+              onChange={(_, value) => setSelectedPref(value)}
+              disabled={!!customPref.trim()}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Pick a common preference"
+                  variant="outlined"
+                  fullWidth
+                />
+              )}
+            />
+          )}
+
+          {enableSelectList && enableCustomInput && (
+            <Divider>
+              <Typography variant="caption" color="text.secondary">
+                or
+              </Typography>
+            </Divider>
+          )}
+
+          {enableCustomInput && (
+            <TextField
+              label="Type your own"
+              placeholder="e.g. Low-carb"
+              value={customPref}
+              onChange={(e) => setCustomPref(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && canAdd) {
+                  e.preventDefault();
+                  handleAdd();
+                }
+              }}
+              variant="outlined"
+              fullWidth
+            />
+          )}
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={handleClose} color="inherit">
+          Cancel
+        </Button>
+        <GradientButton onClick={handleAdd} disabled={!canAdd}>
+          Add preference
+        </GradientButton>
+      </DialogActions>
+    </Dialog>
   );
 };
 

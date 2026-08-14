@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { toast } from "react-toastify";
+import TextField from "@mui/material/TextField";
+import { AuthShell } from "@/components/auth/AuthShell";
+import { GradientButton } from "@/components/ui/GradientButton";
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");
@@ -15,7 +18,7 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     if (!identifier || !password) {
-      setError("Please enter your username/email and password");
+      setError("Please enter your username/email and password.");
       return;
     }
     try {
@@ -26,78 +29,63 @@ export default function LoginPage() {
         setError(res.error);
         return;
       }
-      toast.success("Logged in successfully");
+      toast.success("Welcome back!");
       router.push("/");
       router.refresh();
     } catch (err: any) {
-      setError(err?.message || "Unknown error");
+      setError(err?.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const onKey = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handleLogin();
   };
 
   return (
-    <div
-      className="min-h-screen pt-20 w-screen bg-cover bg-center flex items-center justify-center p-5"
-      style={{ backgroundImage: "url('/images/login.png')", fontFamily: '"Comic Sans MS", cursive, sans-serif' }}
+    <AuthShell
+      title="Welcome back"
+      subtitle="Log in to pick up where your appetite left off."
+      footer={
+        <>
+          New here?{" "}
+          <Link href="/register" className="font-bold text-[var(--terracotta)] hover:underline">
+            Create an account
+          </Link>
+        </>
+      }
     >
-      <div className="backdrop-blur-md bg-white/5 p-8 text-center w-full max-w-xl border border-white/50 shadow-[0_8px_24px_rgba(0,0,0,0.5)] rounded-xl transition-transform duration-300 hover:scale-105">
-        <h1 className="text-black font-bold text-3xl mb-6">Login</h1>
+      <div className="flex flex-col gap-4">
+        <TextField
+          label="Username or email"
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+          onKeyDown={onKey}
+          fullWidth
+          autoFocus
+          autoComplete="username"
+        />
+        <TextField
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={onKey}
+          fullWidth
+          autoComplete="current-password"
+        />
 
-        <div className="flex flex-col gap-4">
-          <input
-            type="text"
-            placeholder="Username or email"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="w-full px-4 py-3 backdrop-blur-lg bg-white/10 rounded-lg border border-white/30 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#C47B4D] focus:bg-white/20 transition-all duration-200"
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="w-full px-4 py-3 backdrop-blur-lg bg-white/10 rounded-lg border border-white/30 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#C47B4D] focus:bg-white/20 transition-all duration-200"
-            required
-          />
-          <button
-            onClick={handleLogin}
-            disabled={loading}
-            className={`w-full py-3 px-6 rounded-lg font-semibold text-white transition-all duration-200 ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-[#C47B4D] hover:bg-[#A35F35] focus:outline-none focus:ring-2 focus:ring-[#C47B4D] focus:ring-offset-2 transform hover:scale-105"
-            }`}
-          >
-            {loading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-white mr-2"></div>
-                Logging in...
-              </div>
-            ) : (
-              "Login"
-            )}
-          </button>
+        {error && (
+          <div className="rounded-xl border border-[var(--paprika)]/30 bg-[var(--paprika)]/10 px-4 py-3 text-sm font-semibold text-[var(--paprika)]">
+            {error}
+          </div>
+        )}
 
-          {error && (
-            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center">{error}</div>
-          )}
-
-          <p className="text-white text-center">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-blue-300 hover:text-blue-100 hover:underline font-semibold transition-colors">
-              Register
-            </Link>
-          </p>
-        </div>
+        <GradientButton size="large" fullWidth onClick={handleLogin} disabled={loading}>
+          {loading ? "Logging in…" : "Log in"}
+        </GradientButton>
       </div>
-    </div>
+    </AuthShell>
   );
 }

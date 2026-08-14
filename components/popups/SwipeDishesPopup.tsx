@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import IconButton from "@mui/material/IconButton";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { api } from "@/lib/api-client";
+import { Tag } from "@/components/ui/DietBadge";
 
 const originalDishes = [
   { name: "Margherita Pizza", image: "/images/Margherita_pizza.png", cuisine: "Italian" },
@@ -40,6 +44,8 @@ type SwipeDishesPopupProps = { onClose: () => void };
 const SwipeDishesPopup = ({ onClose }: SwipeDishesPopupProps) => {
   const [dishes, setDishes] = useState(originalDishes);
   const [index, setIndex] = useState(0);
+  const [imageError, setImageError] = useState(false);
+  const [exitX, setExitX] = useState(0);
 
   // Shuffle dishes on mount and auto-close if onboarding already completed
   useEffect(() => {
@@ -48,8 +54,8 @@ const SwipeDishesPopup = ({ onClose }: SwipeDishesPopupProps) => {
       try {
         const completed = (await api.onboarding.getSwipeCompleted()).completed;
         if (completed) onClose();
-      } catch (err) {
-        console.error("Failed to check onboarding status", err);
+      } catch {
+        // Best-effort: if the check fails, keep the popup open so the user can still swipe.
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -57,12 +63,12 @@ const SwipeDishesPopup = ({ onClose }: SwipeDishesPopupProps) => {
 
   const handleSwipe = (liked: boolean) => {
     const dish = dishes[index];
-    api.dishes.swipe(dish.name, liked).catch((err) => console.error("Swipe save failed", err));
+    setExitX(liked ? 240 : -240);
+    setImageError(false);
+    api.dishes.swipe(dish.name, liked).catch(() => {});
     // First successful swipe marks onboarding completed
     if (index === 0) {
-      api.onboarding.setSwipeCompleted().catch((err) =>
-        console.error("Failed to set onboarding completed", err)
-      );
+      api.onboarding.setSwipeCompleted().catch(() => {});
     }
     if (index < dishes.length - 1) setIndex(index + 1);
     else onClose();
@@ -73,35 +79,74 @@ const SwipeDishesPopup = ({ onClose }: SwipeDishesPopupProps) => {
   const dish = dishes[index];
 
   return (
-    <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 flex flex-col items-center w-[350px] max-w-full relative animate-fadeIn">
-        <button
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none"
+    <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
+      <div className="card-surface relative flex w-[360px] max-w-full flex-col items-center p-6 shadow-[var(--shadow-lg)] animate-fade-in-up">
+        <IconButton
           onClick={onClose}
           aria-label="Close"
+          size="small"
+          sx={{ position: "absolute", top: 8, right: 8, color: "var(--text-muted)" }}
         >
-          ×
-        </button>
-        <img src={dish.image} alt={dish.name} className="w-64 h-48 object-cover rounded-xl mb-4 border border-gray-200 shadow" />
-        <h2 className="text-2xl font-bold mb-2 text-center">{dish.name}</h2>
-        <p className="text-lg text-gray-600 mb-6 text-center">{dish.cuisine}</p>
-        <div className="flex gap-6 mb-2">
+          <CloseRoundedIcon />
+        </IconButton>
+
+        <div className="mb-1 inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[var(--paprika)]">
+          <span className="h-1.5 w-1.5 rounded-full bg-sunset" />
+          Tell us your taste
+        </div>
+        <p className="mb-4 text-center text-sm text-[var(--text-muted)]">
+          Like the dishes you enjoy so we can tailor recommendations.
+        </p>
+
+        <div className="w-full">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={dish.name}
+              className="flex flex-col items-center"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: exitX }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
+              {imageError ? (
+                <div className="mb-4 grid h-48 w-full place-items-center rounded-2xl border border-[var(--border)] bg-[var(--bg)] text-sm text-[var(--text-muted)]">
+                  Image unavailable
+                </div>
+              ) : (
+                <img
+                  src={dish.image}
+                  alt={dish.name}
+                  onError={() => setImageError(true)}
+                  className="mb-4 h-48 w-full rounded-2xl border border-[var(--border)] object-cover shadow-[var(--shadow-sm)]"
+                />
+              )}
+              <h2 className="font-display text-2xl font-extrabold text-[var(--text)]">{dish.name}</h2>
+              <div className="mt-2">
+                <Tag>{dish.cuisine}</Tag>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        <div className="mt-6 flex gap-6">
           <button
             onClick={() => handleSwipe(false)}
-            className="bg-red-100 hover:bg-red-200 text-red-600 text-2xl rounded-full w-16 h-16 flex items-center justify-center shadow transition"
+            className="grid h-16 w-16 place-items-center rounded-full border border-[var(--border)] bg-[var(--bg)] text-2xl text-[var(--paprika)] shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]"
             aria-label="Dislike"
           >
             👎
           </button>
           <button
             onClick={() => handleSwipe(true)}
-            className="bg-green-100 hover:bg-green-200 text-green-600 text-2xl rounded-full w-16 h-16 flex items-center justify-center shadow transition"
+            className="grid h-16 w-16 place-items-center rounded-full bg-sunset text-2xl text-white shadow-[var(--shadow-md)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lg)]"
             aria-label="Like"
           >
             👍
           </button>
         </div>
-        <span className="text-sm text-gray-400">{index + 1} / {dishes.length}</span>
+        <span className="mt-4 text-sm font-semibold text-[var(--text-muted)]">
+          {index + 1} / {dishes.length}
+        </span>
       </div>
     </div>
   );

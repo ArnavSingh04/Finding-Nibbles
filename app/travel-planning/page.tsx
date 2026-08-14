@@ -1,29 +1,66 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
+import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import StarRoundedIcon from "@mui/icons-material/StarRounded";
+import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
+import { toast } from "react-toastify";
 import dishesDataJson from "@/lib/famous_dishes_by_city.json";
 import { api } from "@/lib/api-client";
 import { useResource } from "@/lib/hooks";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import type { ISavedRestaurant, ISavedDish } from "@/lib/models";
+import { PageContainer } from "@/components/ui/PageContainer";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { Tag } from "@/components/ui/DietBadge";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 
-// interface { [city: string]: string[] }
 type DishesJSON = { [city: string]: string[] };
 
 interface Dish {
   name: string;
-  image?: string; // path to local image
-  imageLoaded?: boolean; // track if image exists
+  image?: string;
+  imageChecked: boolean;
+  imageExists: boolean;
 }
 
-interface CityDishes {
-  city: string;
-  dishes: Dish[];
-}
+const dishesData = dishesDataJson as DishesJSON;
+
+const dishNameToFilename = (dishName: string): string =>
+  dishName
+    .replace(/[^a-zA-Z0-9\s\-_]/g, "")
+    .replace(/\s+/g, "_")
+    .replace(/[()]/g, "");
+
+const getImagePath = (cityName: string, dishName: string): string => {
+  const filename = dishNameToFilename(dishName);
+  const baseURL =
+    "https://cdn.jsdelivr.net/gh/ArnavSingh04/finding-nibbles-images@main/dishes/";
+  return `${baseURL}${encodeURIComponent(cityName)}/${encodeURIComponent(
+    filename
+  )}.png`;
+};
 
 export default function TravelPlanningPage() {
   const { isLoggedIn } = useCurrentUser();
-  const [cityDishes, setCityDishes] = useState<CityDishes[]>([]);
+  const { confirm, dialog } = useConfirm();
+
+  const cities = useMemo(() => Object.keys(dishesData).sort(), []);
+  const [selectedCity, setSelectedCity] = useState<string>(cities[0] ?? "");
+  const [dishes, setDishes] = useState<Dish[]>([]);
+  const [savingDish, setSavingDish] = useState<string | null>(null);
 
   const {
     data: restaurants = [],
@@ -33,295 +70,254 @@ export default function TravelPlanningPage() {
 
   const {
     data: wishlist = [],
-    loading: wishlistLoading,
     refetch: refetchWishlist,
   } = useResource<ISavedDish[]>(() => api.savedDishes.list(), []);
 
-  const dishesData: DishesJSON = dishesDataJson as DishesJSON;
-
-  const dishNameToFilename = (dishName: string): string => {
-    return dishName
-      .replace(/[^a-zA-Z0-9\s\-_]/g, "") // Remove special characters except spaces, hyphens, underscores
-      .replace(/\s+/g, "_") // Replace spaces with underscores
-      .replace(/[()]/g, ""); // Remove parentheses
-  };
-
-  // Updated helper function to get image path from GitHub CDN
-  const getImagePath = (cityName: string, dishName: string): string => {
-    const filename = dishNameToFilename(dishName);
-    const baseURL =
-      "https://cdn.jsdelivr.net/gh/ArnavSingh04/finding-nibbles-images@main/dishes/";
-    return `${baseURL}${encodeURIComponent(cityName)}/${encodeURIComponent(
-      filename
-    )}.png`;
-  };
-
-  // Function to check if image exists
-  const checkImageExists = async (imagePath: string): Promise<boolean> => {
-    try {
-      const response = await fetch(imagePath, { method: "HEAD" });
-      return response.ok;
-    } catch {
-      return false;
-    }
-  };
-
-  const handleAddDish = async (dishName: string, city: string) => {
-    try {
-      await api.savedDishes.add(dishName, city);
-      await refetchWishlist();
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
-
-  const handleRemoveDish = async (dishId: string) => {
-    try {
-      await api.savedDishes.remove(dishId);
-      await refetchWishlist();
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
-
+  // Build the dish list for the selected city, then probe which images exist.
   useEffect(() => {
-    // Step 1: Build initial structure with image paths
-    const initialCities: CityDishes[] = Object.keys(dishesData).map((city) => ({
-      city,
-      dishes: dishesData[city].map((dishName) => ({
-        name: dishName,
-        image: getImagePath(city, dishName),
-        imageLoaded: false
-      }))
+    if (!selectedCity) return;
+    const list = dishesData[selectedCity] ?? [];
+    const initial: Dish[] = list.map((name) => ({
+      name,
+      image: getImagePath(selectedCity, name),
+      imageChecked: false,
+      imageExists: false,
     }));
+    setDishes(initial);
 
-    setCityDishes(initialCities);
-
-    // Step 2: Check which images exist asynchronously
-    const checkImages = async () => {
-      for (let cityIndex = 0; cityIndex < initialCities.length; cityIndex++) {
-        const cityObj = initialCities[cityIndex];
-
-        for (
-          let dishIndex = 0;
-          dishIndex < cityObj.dishes.length;
-          dishIndex++
-        ) {
-          const dish = cityObj.dishes[dishIndex];
-
-          if (dish.image) {
-            const imageExists = await checkImageExists(dish.image);
-
-            // Update the specific dish image loaded status in state
-            setCityDishes((prev) => {
-              const newState = [...prev];
-              newState[cityIndex].dishes[dishIndex].imageLoaded = imageExists;
-              if (!imageExists) {
-                // If image doesn't exist, clear the image path
-                newState[cityIndex].dishes[dishIndex].image = undefined;
-              }
-              return newState;
-            });
-          }
-
-          // Small delay to avoid overwhelming the server with requests
-          await new Promise((resolve) => setTimeout(resolve, 10));
+    let cancelled = false;
+    (async () => {
+      for (let i = 0; i < initial.length; i++) {
+        const path = initial[i].image;
+        let exists = false;
+        try {
+          const res = await fetch(path!, { method: "HEAD" });
+          exists = res.ok;
+        } catch {
+          exists = false;
         }
+        if (cancelled) return;
+        setDishes((prev) =>
+          prev.map((d, idx) =>
+            idx === i ? { ...d, imageChecked: true, imageExists: exists } : d
+          )
+        );
+        await new Promise((r) => setTimeout(r, 10));
       }
+    })();
+
+    return () => {
+      cancelled = true;
     };
+  }, [selectedCity]);
 
-    checkImages();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const savedDishFor = (name: string, city: string) =>
+    wishlist.find((w) => w.name === name && w.city === city);
 
-  const handleRemove = async (placeId: string) => {
+  const handleToggleDish = async (dishName: string, city: string) => {
+    if (!isLoggedIn) {
+      toast.info("Log in to save dishes to your wishlist");
+      return;
+    }
+    const existing = savedDishFor(dishName, city);
+    setSavingDish(dishName);
+    try {
+      if (existing?._id) {
+        await api.savedDishes.remove(existing._id);
+        toast.success(`Removed ${dishName}`);
+      } else {
+        await api.savedDishes.add(dishName, city);
+        toast.success(`Saved ${dishName}`);
+      }
+      await refetchWishlist();
+    } catch (err: any) {
+      toast.error(err?.message || "Couldn't update your wishlist");
+    } finally {
+      setSavingDish(null);
+    }
+  };
+
+  const handleRemoveRestaurant = async (
+    placeId: string,
+    name: string
+  ) => {
+    const ok = await confirm({
+      title: "Remove restaurant?",
+      message: `"${name}" will be removed from your saved list.`,
+      confirmLabel: "Remove",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await api.savedRestaurants.remove(placeId);
+      toast.success("Restaurant removed");
       await refetchRestaurants();
-    } catch (error: any) {
-      alert(`Failed to remove: ${error.message || error}`);
+    } catch (err: any) {
+      toast.error(err?.message || "Couldn't remove that restaurant");
     }
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: "#f5deb3", // Peach background color
-        minHeight: "100vh",
-        padding: "1rem",
-        paddingTop: "80px", // Add top padding to account for navbar
-        width: "100%",
-        boxSizing: "border-box"
-      }}
-    >
+    <PageContainer>
+      <PageHeader
+        eyebrow="Explore by city"
+        title="Famous dishes to hunt down"
+        subtitle="Pick a city, browse its signature dishes, and save the ones you want to try on your next trip."
+      />
 
-      {/* DISH LIKE OPTIONS ADD HERE */}
-
-      {/* DIS LIKE OPTIONS */}
-
-
-      {/* Your Saved Restaurants Section */}
-      <div style={{ marginBottom: "3rem" }}>
-        <h2
-          style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            color: "#333",
-            textAlign: "center",
-            marginBottom: "1.5rem",
-            marginTop: "0",
-            display: "block",
-            width: "100%"
-          }}
-        >
-          Your Saved Restaurants
-        </h2>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            width: "100%"
-          }}
-        >
-          {restaurantsLoading ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: "2rem"
-              }}
-            >
-              <div
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  border: "3px solid #f3f3f3",
-                  borderTop: "3px solid #b87b45",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite"
-                }}
-              />
-              <style>{`
-                @keyframes spin {
-                  0% { transform: rotate(0deg); }
-                  100% { transform: rotate(360deg); }
-                }
-              `}</style>
-            </div>
-          ) : (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem",
-                width: "100%",
-                maxWidth: "600px"
-              }}
-            >
-              {restaurants.length > 0 ? (
-                restaurants.map((restaurant) => (
-                  <div
-                    key={restaurant._id}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      border: "2px solid #b87b45",
-                      borderRadius: "12px",
-                      padding: "1rem",
-                      backgroundColor: "white",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: "0.5rem"
-                      }}
-                    >
-                      <h3
-                        style={{
-                          fontSize: "1.125rem",
-                          fontWeight: "600",
-                          margin: "0"
-                        }}
-                      >
-                        {restaurant.name}
-                      </h3>
-                      <button
-                        onClick={() => handleRemove(restaurant.placeId)}
-                        style={{
-                          color: "black",
-                          fontWeight: "bold",
-                          fontSize: "1.5rem",
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          padding: "0",
-                          lineHeight: "1"
-                        }}
-                        onMouseOver={(e) => (e.currentTarget.style.color = "#b87b45")}
-                        onMouseOut={(e) => (e.currentTarget.style.color = "black")}
-                      >
-                        ×
-                      </button>
-                    </div>
-                    <p
-                      style={{
-                        fontSize: "0.875rem",
-                        color: "#374151",
-                        margin: "0 0 0.25rem 0"
-                      }}
-                    >
-                      {restaurant.location}
-                    </p>
-                    {restaurant.rating !== undefined &&
-                      restaurant.rating !== null && (
-                        <p
-                          style={{
-                            fontSize: "0.875rem",
-                            color: "#374151",
-                            margin: "0 0 0.25rem 0"
-                          }}
-                        >
-                          Rating: {restaurant.rating}
-                        </p>
-                      )}
-                    {restaurant.cuisine && restaurant.cuisine.length > 0 && (
-                      <p
-                        style={{
-                          fontSize: "0.875rem",
-                          color: "#374151",
-                          margin: "0"
-                        }}
-                      >
-                        Cuisine: {restaurant.cuisine.join(", ")}
-                      </p>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <p
-                  style={{
-                    textAlign: "center",
-                    color: "#6B7280",
-                    fontSize: "1rem",
-                    fontStyle: "italic"
-                  }}
-                >
-                  No saved restaurants found
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+      <div className="mb-8 max-w-xs">
+        <FormControl fullWidth size="small">
+          <InputLabel id="city-select-label">City</InputLabel>
+          <Select
+            labelId="city-select-label"
+            label="City"
+            value={selectedCity}
+            onChange={(e) => setSelectedCity(e.target.value)}
+            MenuProps={{ PaperProps: { style: { maxHeight: 360 } } }}
+          >
+            {cities.map((city) => (
+              <MenuItem key={city} value={city}>
+                {city}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </div>
 
-{/* Add Dish wishlist section here */}
+      {dishes.length === 0 ? (
+        <EmptyState
+          emoji="🍜"
+          title="No dishes for this city"
+          message="Try picking a different city from the list."
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {dishes.map((dish) => {
+            const saved = !!savedDishFor(dish.name, selectedCity);
+            const busy = savingDish === dish.name;
+            return (
+              <div
+                key={dish.name}
+                className="card-surface flex flex-col overflow-hidden animate-fade-in-up"
+              >
+                <div className="relative aspect-[4/3] w-full bg-sunset-soft">
+                  {dish.imageExists && dish.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={dish.image}
+                      alt={dish.name}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="grid h-full w-full place-items-center text-4xl">
+                      🍽️
+                    </div>
+                  )}
+                  <Tooltip title={saved ? "Remove from wishlist" : "Save to wishlist"}>
+                    <IconButton
+                      onClick={() => handleToggleDish(dish.name, selectedCity)}
+                      disabled={busy}
+                      aria-label={saved ? "Remove from wishlist" : "Save to wishlist"}
+                      sx={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        bgcolor: "rgba(255,255,255,0.9)",
+                        color: "var(--paprika)",
+                        "&:hover": { bgcolor: "#fff" },
+                      }}
+                    >
+                      {saved ? (
+                        <FavoriteRoundedIcon />
+                      ) : (
+                        <FavoriteBorderRoundedIcon />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                </div>
+                <div className="flex flex-1 flex-col gap-2 p-4">
+                  <h3 className="font-display text-base font-bold text-[var(--text)]">
+                    {dish.name}
+                  </h3>
+                  <div className="mt-auto">
+                    <Tag>
+                      <PlaceRoundedIcon fontSize="inherit" /> {selectedCity}
+                    </Tag>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-    </div>
+      <section className="mt-14">
+        <h2 className="font-display text-2xl font-extrabold text-[var(--text)]">
+          Your saved restaurants
+        </h2>
+        <p className="mt-1 mb-6 text-[var(--text-muted)]">
+          Places you bookmarked while searching — add them to a trip anytime.
+        </p>
+
+        {restaurantsLoading ? (
+          <LoadingState label="Loading saved restaurants…" />
+        ) : restaurants.length === 0 ? (
+          <EmptyState
+            emoji="📍"
+            title="No saved restaurants yet"
+            message="Search for restaurants and tap save to build your shortlist."
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {restaurants.map((restaurant) => (
+              <div
+                key={restaurant._id}
+                className="card-surface flex flex-col gap-2 p-5"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-display text-base font-bold text-[var(--text)]">
+                    {restaurant.name}
+                  </h3>
+                  <Tooltip title="Remove">
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        handleRemoveRestaurant(restaurant.placeId, restaurant.name)
+                      }
+                      aria-label="Remove restaurant"
+                      sx={{ color: "var(--paprika)" }}
+                    >
+                      <DeleteOutlineRoundedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </div>
+                {restaurant.location && (
+                  <p className="flex items-center gap-1 text-sm text-[var(--text-muted)]">
+                    <PlaceRoundedIcon fontSize="inherit" />
+                    {restaurant.location}
+                  </p>
+                )}
+                {restaurant.rating != null && (
+                  <p className="flex items-center gap-1 text-sm text-[var(--text-muted)]">
+                    <StarRoundedIcon fontSize="inherit" sx={{ color: "var(--honey)" }} />
+                    {restaurant.rating}
+                  </p>
+                )}
+                {restaurant.cuisine && restaurant.cuisine.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {restaurant.cuisine.map((c) => (
+                      <Tag key={c}>{c}</Tag>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {dialog}
+    </PageContainer>
   );
 }

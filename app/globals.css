@@ -1,14 +1,134 @@
 @import "tailwindcss";
 @import "react-toastify/dist/ReactToastify.css";
 
+/* Dark mode is driven by a `.dark` class on <html> (toggled by the app),
+   not the OS setting, so the in-app toggle is authoritative. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Design tokens ─────────────────────────────────────────────── */
+:root {
+  --cream: #fff7ef;
+  --paper: #ffffff;
+  --ink: #2b1d14;
+  --ink-soft: #7a6a5d;
+  --terracotta: #c4703e;
+  --terracotta-strong: #a85a2e;
+  --honey: #f4a93c;
+  --paprika: #e1543b;
+  --basil: #4e9a5b;
+  --line: #efe2d6;
+
+  --bg: var(--cream);
+  --surface: var(--paper);
+  --text: var(--ink);
+  --text-muted: var(--ink-soft);
+  --border: var(--line);
+  --brand: var(--terracotta);
+  --brand-contrast: #ffffff;
+
+  --sunset: linear-gradient(135deg, #f4a93c 0%, #e1543b 100%);
+  --sunset-soft: linear-gradient(135deg, rgba(244, 169, 60, 0.16) 0%, rgba(225, 84, 59, 0.16) 100%);
+  --shadow-sm: 0 2px 8px rgba(120, 72, 40, 0.08);
+  --shadow-md: 0 10px 30px rgba(120, 72, 40, 0.12);
+  --shadow-lg: 0 24px 60px rgba(120, 72, 40, 0.18);
+  --radius: 20px;
+}
+
+.dark {
+  --cream: #1e1712;
+  --paper: #2a211a;
+  --ink: #f7ede3;
+  --ink-soft: #b7a697;
+  --terracotta: #e08a54;
+  --terracotta-strong: #f0a06b;
+  --honey: #f4b45c;
+  --paprika: #f0664e;
+  --basil: #6fbe7c;
+  --line: #3a2e25;
+
+  --bg: var(--cream);
+  --surface: var(--paper);
+  --text: var(--ink);
+  --text-muted: var(--ink-soft);
+  --border: var(--line);
+  --brand: var(--terracotta);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+/* ── Base ──────────────────────────────────────────────────────── */
 html,
 body {
   padding: 0;
   margin: 0;
-  background: #fdfaf7;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-#__next,
-body {
-  min-height: 100vh;
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: var(--font-display), var(--font-body), sans-serif;
+}
+
+/* ── Utilities ─────────────────────────────────────────────────── */
+.text-gradient {
+  background: var(--sunset);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.bg-sunset { background-image: var(--sunset); }
+.bg-sunset-soft { background-image: var(--sunset-soft); }
+
+.card-surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Warm-tinted focus ring for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--terracotta);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(225, 84, 59, 0.22);
+}
+
+/* Custom scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up { animation: fadeInUp 0.5s ease both; }
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.animate-floaty { animation: floaty 4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

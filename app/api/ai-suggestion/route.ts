@@ -52,8 +52,11 @@ export async function POST(req: NextRequest) {
     }
 
     const constraints = [
-      "Return ONLY valid JSON array of up to 5 items.",
-      'Each item must have keys "name" and "description".',
+      "Return ONLY a valid JSON array of up to 5 items.",
+      'Each item MUST have keys: "name" (string), "description" (string, 1 sentence),',
+      '"cuisine" (string), "why" (string, one short sentence on why it suits THIS user),',
+      '"nutrition" (object with numeric "calories","protein","carbs","fat" — best estimate per serving),',
+      'and "dietary" (object with boolean "vegetarian","vegan","glutenFree","dairyFree","halal").',
       "No markdown, no code fences, no extra commentary.",
       "Do NOT include tokens, IDs, counters, tags, or suffixes in names; names must be plain dish names.",
       "Prefer variety: cuisines, cooking methods, proteins, and flavor profiles should vary.",
@@ -114,8 +117,8 @@ export async function POST(req: NextRequest) {
       constraints,
       ...contextBlocks,
       mode === "occasion"
-        ? 'Return JSON object with EXACT structure: {"centerpiece":{"name":"Dish Name","description":"Dish description"},"complements":[{"name":"Complement 1","description":"Description 1"},{"name":"Complement 2","description":"Description 2"}]}. The centerpiece is the main dish for the occasion. Complements are supporting dishes. All name and description fields are REQUIRED strings. Cohesive menu; respect dislikes; avoid repeats.'
-        : 'Output example: [{"name":"Margherita Pizza","description":"A classic Neapolitan pizza..."}]. Prefer common but authentic dishes where appropriate.',
+        ? 'Return JSON object with EXACT structure: {"centerpiece":{...dish...},"complements":[{...dish...},{...dish...}]} where each dish has keys name, description, cuisine, why, nutrition, dietary as specified above. The centerpiece is the main dish; complements support it. Cohesive menu; respect dislikes; avoid repeats.'
+        : 'Output example: [{"name":"Margherita Pizza","description":"Classic Neapolitan pizza with basil and mozzarella.","cuisine":"Italian","why":"Matches your love of cheesy, tomato-forward dishes.","nutrition":{"calories":285,"protein":12,"carbs":35,"fat":10},"dietary":{"vegetarian":true,"vegan":false,"glutenFree":false,"dairyFree":false,"halal":true}}]. Prefer common but authentic dishes where appropriate.',
     ].join("\n");
 
     const rawText = (await generateAiText(finalPrompt)) || "No suggestion generated.";
@@ -123,10 +126,33 @@ export async function POST(req: NextRequest) {
     const cleaned = rawText.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(cleaned);
 
+    const num = (v: any) => (Number.isFinite(Number(v)) ? Math.round(Number(v)) : undefined);
     const sanitize = (d: any) => {
       if (!d || typeof d.name !== "string" || typeof d.description !== "string") return null;
       const name = String(d.name).trim().replace(/\s*\d{2,}[a-z]{1,3}$/i, "");
-      return { name, description: String(d.description).trim() };
+      const n = d.nutrition ?? {};
+      const nutrition =
+        n && (n.calories != null || n.protein != null || n.carbs != null || n.fat != null)
+          ? { calories: num(n.calories), protein: num(n.protein), carbs: num(n.carbs), fat: num(n.fat) }
+          : undefined;
+      const dt = d.dietary ?? {};
+      const dietary = dt && typeof dt === "object"
+        ? {
+            vegetarian: !!dt.vegetarian,
+            vegan: !!dt.vegan,
+            glutenFree: !!dt.glutenFree,
+            dairyFree: !!dt.dairyFree,
+            halal: !!dt.halal,
+          }
+        : undefined;
+      return {
+        name,
+        description: String(d.description).trim(),
+        cuisine: typeof d.cuisine === "string" ? d.cuisine.trim() : undefined,
+        why: typeof d.why === "string" ? d.why.trim() : undefined,
+        nutrition,
+        dietary,
+      };
     };
 
     if (mode === "occasion") {

@@ -1,87 +1,133 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { api } from "@/lib/api-client";
+import { toast } from "react-toastify";
+import Button from "@mui/material/Button";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
+import CelebrationRoundedIcon from "@mui/icons-material/CelebrationRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import { api, type DishSuggestion } from "@/lib/api-client";
 import { useCurrentUser } from "@/lib/useCurrentUser";
+import { PageContainer } from "@/components/ui/PageContainer";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { GradientButton } from "@/components/ui/GradientButton";
+import { DietBadge, Tag, type DietKey } from "@/components/ui/DietBadge";
+
+const DIET_KEYS: DietKey[] = ["vegetarian", "vegan", "glutenFree", "dairyFree", "halal"];
+
+const OCCASIONS = [
+  { value: "birthday", label: "Birthday" },
+  { value: "date night", label: "Date night" },
+  { value: "holiday", label: "Holiday" },
+  { value: "family dinner", label: "Family dinner" },
+  { value: "celebration", label: "Celebration" },
+];
+
+/** today's date as dd/mm/yyyy — matches MealType.date format. */
+function todayKey() {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+type SuggestedDish = DishSuggestion & { image?: string };
+
+function DishResultCard({ dish }: { dish: SuggestedDish }) {
+  const [imageError, setImageError] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const dietary = DIET_KEYS.filter((k) => dish.dietary?.[k]);
+  const n = dish.nutrition;
+
+  const addToMealPlan = async () => {
+    setAdding(true);
+    try {
+      await api.meals.insert({
+        date: todayKey(),
+        meal: dish.name,
+        calories: n?.calories ?? null,
+        protein: n?.protein ?? null,
+        fat: n?.fat ?? null,
+        carbs: n?.carbs ?? null,
+      });
+      toast.success(`Added "${dish.name}" to today's meal plan`);
+    } catch (e: any) {
+      toast.error(e?.message || "Couldn't add to meal plan");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  return (
+    <article className="card-surface flex flex-col overflow-hidden animate-fade-in-up">
+      {dish.image && !imageError ? (
+        <img
+          src={dish.image}
+          alt={dish.name}
+          onError={() => setImageError(true)}
+          className="h-56 w-full object-cover"
+        />
+      ) : (
+        <div className="grid h-56 w-full place-items-center bg-sunset-soft text-4xl" aria-hidden>
+          🍽️
+        </div>
+      )}
+
+      <div className="flex flex-1 flex-col p-5">
+        <div className="mb-2 flex items-start justify-between gap-2">
+          <h3 className="font-display text-xl font-bold text-[var(--text)]">{dish.name}</h3>
+          {dish.cuisine && <Tag>{dish.cuisine}</Tag>}
+        </div>
+
+        <p className="text-sm text-[var(--text-muted)]">{dish.description}</p>
+
+        {dish.why && (
+          <p className="mt-3 rounded-xl bg-sunset-soft px-3 py-2 text-sm font-semibold text-[var(--terracotta-strong)]">
+            ✨ {dish.why}
+          </p>
+        )}
+
+        {dietary.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {dietary.map((k) => (
+              <DietBadge key={k} diet={k} />
+            ))}
+          </div>
+        )}
+
+        {n?.calories != null && (
+          <div className="mt-3 border-t border-[var(--border)] pt-3 text-xs font-bold text-[var(--text-muted)]">
+            🔥 {n.calories} kcal · P {n.protein ?? "—"}g · C {n.carbs ?? "—"}g · F {n.fat ?? "—"}g
+          </div>
+        )}
+
+        <div className="mt-4 flex-1" />
+        <Button
+          variant="outlined"
+          fullWidth
+          startIcon={<AddRoundedIcon />}
+          onClick={addToMealPlan}
+          disabled={adding}
+        >
+          {adding ? "Adding…" : "Add to meal plan"}
+        </Button>
+      </div>
+    </article>
+  );
+}
 
 export default function AiSuggestionPage() {
   const { user } = useCurrentUser();
-  const [suggestion, setSuggestion] = useState<string>("");
-  const [image, setImage] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+  const [dishes, setDishes] = useState<SuggestedDish[] | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [selectedOccasion, setSelectedOccasion] = useState<string>("birthday");
   const [preferences, setPreferences] = useState<string[]>([]);
-
-  function extractSuggestedDish(text: string): string | null {
-    const match = text.match(/\*\*([^*]+)\*\*/);
-    return match ? match[1] : null;
-  }
-
-  function formatBold(text: string) {
-    return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-      part.startsWith("**") && part.endsWith("**") ? (
-        <strong key={i}>{part.slice(2, -2)}</strong>
-      ) : (
-        part
-      )
-    );
-  }
-
-  const fetchSuggestion = async (params: Record<string, string> = {}): Promise<void> => {
-    setLoading(true);
-    setSuggestion("");
-    setImage("");
-    setError("");
-
-    try {
-      const data: { suggestion?: string; dishes?: any[]; menu?: any } = await api.ai.suggest(params);
-
-      // Handle different response formats based on mode
-      if (data.menu) {
-        // Occasion mode response - display centerpiece and complements
-        const { centerpiece, complements } = data.menu;
-        let menuText = `**${centerpiece.name}** - ${centerpiece.description}`;
-        if (complements && complements.length > 0) {
-          menuText += "\n\nComplementary dishes:\n";
-          complements.forEach((complement: any) => {
-            menuText += `• **${complement.name}** - ${complement.description}\n`;
-          });
-        }
-        setSuggestion(menuText);
-      } else if (data.dishes && data.dishes.length > 0) {
-        // Regular mode response - display first dish
-        const firstDish = data.dishes[0];
-        setSuggestion(`**${firstDish.name}** - ${firstDish.description}`);
-      } else {
-        setSuggestion(data.suggestion || "No suggestion received.");
-      }
-
-      // Extract dish name for image generation
-      let dishName = "";
-      if (data.menu) {
-        dishName = data.menu.centerpiece.name;
-      } else if (data.dishes && data.dishes.length > 0) {
-        dishName = data.dishes[0].name;
-      } else {
-        dishName = extractSuggestedDish(data.suggestion ?? "") || "";
-      }
-
-      const imageData = await api.ai.generateImage(dishName);
-
-      // Use fallback image if imageUrl is present
-      if (imageData.imageUrl) {
-        setImage(imageData.imageUrl);
-      } else {
-        setImage(`data:image/png;base64,${imageData.image}`);
-      }
-    } catch (err) {
-      console.error("Failed to fetch suggestion:", err);
-      setError("Failed to get a suggestion. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (user?.profile?.preferences) {
@@ -89,102 +135,157 @@ export default function AiSuggestionPage() {
     }
   }, [user]);
 
+  const fetchSuggestion = async (params: Record<string, unknown> = {}): Promise<void> => {
+    setLoading(true);
+    setError("");
+    setDishes(null);
+
+    try {
+      const data = await api.ai.suggest({ ...params, userId: user?._id });
+
+      // Normalise both "dishes" and "menu" shapes into a flat list.
+      let list: DishSuggestion[] = [];
+      if (data.menu) {
+        const { centerpiece, complements } = data.menu as {
+          centerpiece: DishSuggestion;
+          complements?: DishSuggestion[];
+        };
+        list = [centerpiece, ...(complements ?? [])].filter(Boolean);
+      } else if (data.dishes?.length) {
+        list = data.dishes;
+      }
+
+      if (list.length === 0) {
+        setDishes([]);
+        return;
+      }
+
+      // Generate images in parallel, degrading gracefully on failure.
+      const withImages = await Promise.all(
+        list.map(async (d) => {
+          try {
+            const img = await api.ai.generateImage(d.name);
+            const image = img.image ? `data:image/png;base64,${img.image}` : img.imageUrl || "";
+            return { ...d, image };
+          } catch {
+            return { ...d, image: "" };
+          }
+        })
+      );
+
+      setDishes(withImages);
+    } catch (err: any) {
+      setError(err?.message || "Couldn't get a suggestion. Please try again.");
+      setDishes(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen pt-20 bg-gradient-to-br from-orange-100 to-orange-200">
-      <div className="max-w-6xl mx-auto pb-12 px-8 lg:px-20">
-        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800 drop-shadow-md">
-          AI Dish Suggestions
-        </h1>
-
-        {/* Loading, Error, or Suggestion Display */}
-        <div className="mb-8">
-          {loading ? (
-            <div className="flex justify-center items-center space-x-2">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800" />
-              <p className="text-lg text-gray-700">Generating dish...</p>
-            </div>
-          ) : error ? (
-            <p className="text-red-500 text-center text-lg">{error}</p>
-          ) : suggestion ? (
-            <div className="bg-yellow-100 border-l-4 border-yellow-500 p-6 rounded-lg shadow-md animate-fade-in">
-              <p className="text-2xl text-gray-800 font-medium text-center">
-                <span className="font-bold text-yellow-700">Recommended Dish:</span>
-                {formatBold(suggestion)}
-              </p>
-              {image && (
-                <div className="mt-6 flex justify-center">
-                  <img
-                    src={image}
-                    alt="AI generated dish"
-                    className="rounded-lg shadow-lg max-w-md border-4 border-yellow-300"
-                  />
-                </div>
-              )}
-            </div>
-          ) : null}
-        </div>
-
-        {/* Buttons and Inputs */}
-        <div className="space-y-8">
-          {/* New Dish Recommendation Button */}
-          <button
-            className="w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center"
-            onClick={() => fetchSuggestion()}
+    <PageContainer>
+      <PageHeader
+        eyebrow="AI powered"
+        title={
+          <>
+            AI dish <span className="text-gradient">suggestions</span>
+          </>
+        }
+        subtitle="Tell us the vibe and we'll plate up ideas — with the why, the macros, and one tap to add them to today's plan."
+        action={
+          <GradientButton
+            startIcon={<AutoAwesomeRoundedIcon />}
+            onClick={() => fetchSuggestion({ mode: "recommended", preferences: preferences.join(",") })}
             disabled={loading}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            New Dish Recommendation
-          </button>
+            Surprise me
+          </GradientButton>
+        }
+      />
 
-          {/* Occasion Selector */}
-          <div className="bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition-shadow">
-            <label
-              htmlFor="occasion"
-              className="block text-left mb-3 font-semibold text-gray-700"
-            >
-              Select Occasion:
-            </label>
-            <select
-              id="occasion"
-              className="w-full px-4 py-3 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+      {/* Controls */}
+      <div className="card-surface mb-8 flex flex-col gap-4 p-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel id="occasion-label">Occasion</InputLabel>
+            <Select
+              labelId="occasion-label"
+              label="Occasion"
               value={selectedOccasion}
               onChange={(e) => setSelectedOccasion(e.target.value)}
               disabled={loading}
             >
-              <option value="birthday">Birthday</option>
-              <option value="date night">Date Night</option>
-              <option value="holiday">Holiday</option>
-              <option value="family dinner">Family Dinner</option>
-              <option value="celebration">Celebration</option>
-            </select>
-
-            <button
-              className="w-full bg-gradient-to-r from-orange-500 to-orange-700 hover:from-orange-600 hover:to-orange-800 text-white py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105"
-              onClick={() => fetchSuggestion({ occasion: selectedOccasion, mode: "occasion" })}
-              disabled={loading}
-            >
-              Get Dish for Occasion
-            </button>
-          </div>
-
-          {/* Suggest Dish from Preferences */}
-          <button
-            className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105"
-            onClick={() => fetchSuggestion({ preferences: preferences.join(",") })} // Associate with user preferences
+              {OCCASIONS.map((o) => (
+                <MenuItem key={o.value} value={o.value}>
+                  {o.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button
+            variant="outlined"
+            startIcon={<CelebrationRoundedIcon />}
+            onClick={() => fetchSuggestion({ occasion: selectedOccasion, mode: "occasion" })}
             disabled={loading}
           >
-            Can't decide what to eat?
-          </button>
+            Get occasion menu
+          </Button>
         </div>
+        <Button
+          variant="outlined"
+          onClick={() => fetchSuggestion({ preferences: preferences.join(",") })}
+          disabled={loading}
+        >
+          Can&rsquo;t decide? Use my taste
+        </Button>
       </div>
-    </div>
+
+      {/* Results */}
+      {loading ? (
+        <LoadingState label="Plating up ideas…" />
+      ) : error ? (
+        <EmptyState
+          emoji="😕"
+          title="Couldn't get a suggestion"
+          message={error}
+          action={
+            <GradientButton onClick={() => fetchSuggestion({ mode: "recommended", preferences: preferences.join(",") })}>
+              Try again
+            </GradientButton>
+          }
+        />
+      ) : dishes === null ? (
+        <EmptyState
+          emoji="🍳"
+          title="Hungry for ideas?"
+          message="Pick an occasion or hit Surprise me to get AI dish suggestions tailored to your taste."
+          action={
+            <GradientButton
+              startIcon={<AutoAwesomeRoundedIcon />}
+              onClick={() => fetchSuggestion({ mode: "recommended", preferences: preferences.join(",") })}
+            >
+              Surprise me
+            </GradientButton>
+          }
+        />
+      ) : dishes.length === 0 ? (
+        <EmptyState
+          emoji="🤔"
+          title="No dishes this time"
+          message="The kitchen came up empty. Try a different occasion or roll again."
+          action={
+            <GradientButton onClick={() => fetchSuggestion({ mode: "recommended", preferences: preferences.join(",") })}>
+              Try again
+            </GradientButton>
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {dishes.map((d, i) => (
+            <DishResultCard key={`${d.name}-${i}`} dish={d} />
+          ))}
+        </div>
+      )}
+    </PageContainer>
   );
 }

@@ -47,10 +47,30 @@ export interface UserProfile {
   };
 }
 
+export interface DishNutrition {
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+}
+
+export interface DishDietary {
+  vegetarian: boolean;
+  vegan: boolean;
+  glutenFree: boolean;
+  dairyFree: boolean;
+  halal: boolean;
+}
+
 export interface DishSuggestion {
   name: string;
   description: string;
   imageUrl?: string;
+  cuisine?: string;
+  /** One short sentence on why this dish suits the user. */
+  why?: string;
+  nutrition?: DishNutrition;
+  dietary?: DishDietary;
 }
 
 export const api = {

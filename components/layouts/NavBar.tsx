@@ -5,211 +5,206 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { toast } from "react-toastify";
+import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
+import MapRoundedIcon from "@mui/icons-material/MapRounded";
+import ExploreRoundedIcon from "@mui/icons-material/ExploreRounded";
+import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
+import LuggageRoundedIcon from "@mui/icons-material/LuggageRounded";
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import { useCurrentUser } from "@/lib/useCurrentUser";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
-const bunnyIcon = "/images/bunnyIcon.png";
+const NAV = [
+  { label: "Home", href: "/", icon: HomeRoundedIcon, match: (p: string) => p === "/" },
+  { label: "Map", href: "/map", icon: MapRoundedIcon, match: (p: string) => p.startsWith("/map") },
+  { label: "Discover", href: "/discover", icon: ExploreRoundedIcon, match: (p: string) => p.startsWith("/discover") },
+  { label: "Meals", href: "/meal-planner", icon: RestaurantMenuRoundedIcon, match: (p: string) => p.startsWith("/meal-planner") },
+  { label: "Trips", href: "/travel-plans", icon: LuggageRoundedIcon, match: (p: string) => p.startsWith("/travel-plan") },
+];
 
-const SavedIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-      d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z" />
-  </svg>
-);
-const MapIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-  </svg>
-);
-const DiscoverIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
-  </svg>
-);
-const MealIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2m-4-2v4m0 0H9m3 0h3" />
-  </svg>
-);
-const TravelIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-  </svg>
-);
-const ProfileIcon = () => (
-  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-  </svg>
-);
-const MenuIcon = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-  </svg>
-);
-const CloseIcon = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-  </svg>
-);
+const DRAWER_LINKS = [
+  { label: "Profile", href: "/profile" },
+  { label: "Saved restaurants", href: "/saved-restaurants" },
+  { label: "Explore by city", href: "/travel-planning" },
+  { label: "Search history", href: "/search-history" },
+];
 
 export const NavBar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { isLoggedIn, user, userName } = useCurrentUser();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [drawer, setDrawer] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const navItems = [
-    { label: "Map", path: "/map", icon: <MapIcon /> },
-    { label: "Discover", path: "/discover", icon: <DiscoverIcon /> },
-    { label: "Meal Planner", path: "/meal-planner", icon: <MealIcon /> },
-    { label: "Travel Plans", path: "/travel-plans", icon: <TravelIcon /> },
-    { label: "Saved Restaurants", path: "/travel-planning", icon: <SavedIcon /> },
-  ];
-
-  const isCurrentPage = (path: string) => {
-    if (path === "/map" && (pathname === "/" || pathname === "/map")) return true;
-    if (
-      path === "/meal-planner" &&
-      (pathname === "/meal-planner" || pathname === "/search-history")
-    )
-      return true;
-    return pathname === path;
-  };
+  // Hide the app chrome on the public marketing/auth screens.
+  const bareRoutes = ["/mainUI", "/login", "/register"];
+  const bare = bareRoutes.includes(pathname);
 
   const handleLogout = async () => {
-    setIsDrawerOpen(false);
+    setDrawer(false);
     await signOut({ redirect: false });
-    toast.success("Logged out successfully");
+    toast.success("Logged out — see you soon!");
     router.push("/login");
   };
 
   return (
     <>
-      <nav className="bg-[#C47B4D] shadow-lg fixed top-0 left-0 right-0 z-[1100]" style={{ fontFamily: '"Comic Sans MS", cursive, sans-serif' }}>
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center space-x-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={bunnyIcon} alt="Bunny Icon" className="w-8 h-8 object-contain" />
-                <span className="text-white font-bold text-xl">Finding Nibbles</span>
-              </Link>
-            </div>
+      <nav className="fixed inset-x-0 top-0 z-[1100] border-b border-[var(--border)] bg-[var(--surface)]/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+          {/* Brand */}
+          <Link href={isLoggedIn ? "/" : "/mainUI"} className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-sunset text-lg shadow-[var(--shadow-sm)]">
+              🐰
+            </span>
+            <span className="font-display text-lg font-extrabold tracking-tight text-[var(--text)]">
+              Finding <span className="text-gradient">Nibbles</span>
+            </span>
+          </Link>
 
-            {isLoggedIn && (
-              <div className="hidden md:flex items-center space-x-1">
-                {navItems.map((item) => (
+          {/* Desktop nav */}
+          {isLoggedIn && !bare && (
+            <div className="hidden items-center gap-1 md:flex">
+              {NAV.map((item) => {
+                const active = item.match(pathname);
+                const Icon = item.icon;
+                return (
                   <Link
-                    key={item.path}
-                    href={item.path}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isCurrentPage(item.path)
-                        ? "bg-[#A35F35] text-white font-bold"
-                        : "text-white text-opacity-80 hover:text-white hover:bg-[#A35F35]"
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-bold transition-colors ${
+                      active
+                        ? "bg-sunset-soft text-[var(--terracotta-strong)]"
+                        : "text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text)]"
                     }`}
                   >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            <div className="flex items-center space-x-3">
-              {!isLoggedIn ? (
-                <>
-                  <Link href="/login" className="text-white text-opacity-90 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
-                    Login
-                  </Link>
-                  <Link href="/register" className="text-white text-opacity-90 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
-                    Register
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-white p-2 hover:bg-[#A35F35] rounded-lg transition-colors">
-                    {isMobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
-                  </button>
-                  <button onClick={() => setIsDrawerOpen(!isDrawerOpen)} className="text-white hover:bg-[#A35F35] p-2 rounded-lg transition-colors">
-                    <ProfileIcon />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {isLoggedIn && isMobileMenuOpen && (
-            <div className="md:hidden border-t border-white border-opacity-20">
-              <div className="py-2 space-y-1">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    href={item.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center space-x-3 px-4 py-3 text-sm font-medium transition-all duration-200 ${
-                      isCurrentPage(item.path)
-                        ? "bg-[#A35F35] text-white border-l-4 border-[#8B4A2B] font-bold"
-                        : "text-white text-opacity-80 hover:text-white hover:bg-[#A35F35] hover:font-semibold"
-                    }`}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
-
-      {isDrawerOpen && (
-        <div className="fixed right-0 top-16 h-[calc(100vh-4rem)] w-80 bg-[#d5a16e] shadow-2xl z-40 transform transition-transform duration-300 ease-in-out border-l-2 border-[#C47B4D]">
-          <div className="h-full flex flex-col p-6">
-            <div className="flex justify-end mb-4">
-              <button onClick={() => setIsDrawerOpen(false)} className="text-white hover:text-[#a95f30] p-1 rounded-lg transition-colors">
-                <CloseIcon />
-              </button>
-            </div>
-
-            <div className="flex flex-col items-center mb-6">
-              <Link href="/profile" onClick={() => setIsDrawerOpen(false)} className="mb-3">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-white mx-auto">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={user?.profile?.profileImage || "/images/default-profile-pic.png"}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </Link>
-              <span className="text-white text-lg font-bold">{userName}</span>
-            </div>
-
-            <nav className="flex-1">
-              <div className="space-y-2">
-                {[
-                  { label: "Profile", path: "/profile" },
-                  { label: "Search History", path: "/search-history" },
-                ].map((item) => (
-                  <Link
-                    key={item.path}
-                    href={item.path}
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="block w-full text-left px-4 py-3 text-white hover:text-[#a95f30] hover:bg-white hover:bg-opacity-10 rounded-lg transition-all duration-200"
-                  >
+                    <Icon fontSize="small" />
                     {item.label}
                   </Link>
-                ))}
+                );
+              })}
+            </div>
+          )}
+
+          {/* Right actions */}
+          <div className="flex items-center gap-1.5">
+            <ThemeToggle />
+            {!isLoggedIn ? (
+              !bare && (
+                <>
+                  <Link href="/login" className="rounded-full px-3 py-2 text-sm font-bold text-[var(--text-muted)] hover:text-[var(--text)]">
+                    Log in
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="rounded-full bg-sunset px-4 py-2 text-sm font-extrabold text-white shadow-[var(--shadow-sm)] hover:brightness-105"
+                  >
+                    Sign up
+                  </Link>
+                </>
+              )
+            ) : (
+              <>
+                {!bare && (
+                  <button
+                    onClick={() => setMobileOpen((v) => !v)}
+                    className="grid h-9 w-9 place-items-center rounded-full text-[var(--text)] hover:bg-[var(--bg)] md:hidden"
+                    aria-label="Toggle menu"
+                  >
+                    {mobileOpen ? <CloseRoundedIcon fontSize="small" /> : <MenuRoundedIcon fontSize="small" />}
+                  </button>
+                )}
                 <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-4 py-3 text-white hover:text-[#a95f30] hover:bg-white hover:bg-opacity-10 rounded-lg transition-all duration-200"
+                  onClick={() => setDrawer(true)}
+                  className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg)] py-1 pl-1 pr-3 hover:shadow-[var(--shadow-sm)]"
+                  aria-label="Open profile menu"
                 >
-                  Logout
+                  <span className="grid h-7 w-7 place-items-center overflow-hidden rounded-full bg-sunset-soft">
+                    {user?.profile?.profileImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={user.profile.profileImage} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <PersonRoundedIcon fontSize="small" className="text-[var(--terracotta)]" />
+                    )}
+                  </span>
+                  <span className="hidden max-w-[8rem] truncate text-sm font-bold text-[var(--text)] sm:block">
+                    {userName}
+                  </span>
                 </button>
-              </div>
-            </nav>
+              </>
+            )}
           </div>
         </div>
+
+        {/* Mobile nav sheet */}
+        {isLoggedIn && !bare && mobileOpen && (
+          <div className="border-t border-[var(--border)] bg-[var(--surface)] px-3 py-2 md:hidden">
+            {NAV.map((item) => {
+              const active = item.match(pathname);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold ${
+                    active ? "bg-sunset-soft text-[var(--terracotta-strong)]" : "text-[var(--text)]"
+                  }`}
+                >
+                  <Icon fontSize="small" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </nav>
+
+      {/* Profile drawer */}
+      {drawer && (
+        <>
+          <div className="fixed inset-0 z-[1200] bg-black/40 backdrop-blur-sm" onClick={() => setDrawer(false)} />
+          <aside className="fixed right-0 top-0 z-[1300] flex h-full w-80 max-w-[85vw] flex-col bg-[var(--surface)] p-6 shadow-[var(--shadow-lg)]">
+            <div className="flex justify-end">
+              <button onClick={() => setDrawer(false)} className="grid h-9 w-9 place-items-center rounded-full hover:bg-[var(--bg)]" aria-label="Close">
+                <CloseRoundedIcon />
+              </button>
+            </div>
+            <div className="mt-2 flex flex-col items-center gap-3 pb-6">
+              <div className="h-20 w-20 overflow-hidden rounded-full ring-4 ring-[var(--bg)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={user?.profile?.profileImage || "/images/default-profile-pic.png"}
+                  alt="Profile"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="text-center">
+                <div className="font-display text-lg font-extrabold text-[var(--text)]">{userName}</div>
+                {user?.username && <div className="text-sm text-[var(--text-muted)]">@{user.username}</div>}
+              </div>
+            </div>
+            <nav className="flex flex-1 flex-col gap-1">
+              {DRAWER_LINKS.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setDrawer(false)}
+                  className="rounded-xl px-4 py-3 font-bold text-[var(--text)] hover:bg-[var(--bg)]"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </nav>
+            <button
+              onClick={handleLogout}
+              className="mt-2 rounded-xl border border-[var(--border)] px-4 py-3 font-bold text-[var(--paprika)] hover:bg-[var(--bg)]"
+            >
+              Log out
+            </button>
+          </aside>
+        </>
       )}
     </>
   );
