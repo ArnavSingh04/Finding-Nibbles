@@ -149,9 +149,7 @@ export const MapScreen = () => {
     []
   );
 
-  console.log(restaurants);
-  // ############### CALCULATING RADIUS
-
+  // Calculate radius conversions between metres and lat/lng degrees.
   const EARTH_RADIUS = 6378137;
 
   const deltaLat = (meters: number) => {
@@ -256,10 +254,6 @@ export const MapScreen = () => {
     return EARTH_RADIUS * c;
   }
 
-  //##########################
-
-  // console.log("This is the restaurants " ,  JSON.stringify(restaurants,null,2));
-
   // Update debounced radius when radius changes
   useEffect(() => {
     setDebouncedRadius(radius);
@@ -333,7 +327,6 @@ export const MapScreen = () => {
       await api.savedRestaurants.save(payload);
       await refetchSavedRestaurants();
       alert("Restaurant saved successfully!");
-      console.log("Restaurant saved successfully");
     } catch (err: any) {
       const reason = err?.message || String(err);
       if (reason.toLowerCase().includes("duplicate") || reason.toLowerCase().includes("already")) {
@@ -367,9 +360,6 @@ export const MapScreen = () => {
       setSearchSaved(true);
       api.searchHistory
         .save(term)
-        .then((result) => {
-          console.log("Search term saved successfully:", term, result);
-        })
         .catch((error) => {
           console.error("Error saving search term:", error);
         })

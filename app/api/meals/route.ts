@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { collections, randomId } from "@/lib/models";
 import { handle, requireUserId } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
+
 /** GET /api/meals — all meals for the current user. */
 export async function GET() {
   return handle(async () => {

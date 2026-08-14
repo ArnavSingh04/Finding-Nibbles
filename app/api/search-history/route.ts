@@ -6,6 +6,8 @@ function normalizeTerm(s: string) {
   return s.trim().replace(/\s+/g, " ");
 }
 
+export const dynamic = "force-dynamic";
+
 /** GET /api/search-history — user's search terms, newest first. */
 export async function GET() {
   return handle(async () => {

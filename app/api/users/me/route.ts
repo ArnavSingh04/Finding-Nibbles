@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { collections } from "@/lib/models";
 import { handle, requireUserId } from "@/lib/session";
 
+// Reads the session (headers) — must never be statically prerendered.
+export const dynamic = "force-dynamic";
+
 /** GET /api/users/me — current user's public profile. */
 export async function GET() {
   return handle(async () => {

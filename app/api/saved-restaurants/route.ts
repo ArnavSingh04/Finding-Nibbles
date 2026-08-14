@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { collections, ensureIndexes } from "@/lib/models";
 import { ApiError, handle, requireUserId } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
+
 /** GET /api/saved-restaurants — user's saved restaurants, newest first. */
 export async function GET() {
   return handle(async () => {

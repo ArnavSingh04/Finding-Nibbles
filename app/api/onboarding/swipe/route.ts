@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { collections } from "@/lib/models";
 import { handle, requireUserId } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
+
 /** GET /api/onboarding/swipe — has the user completed the swipe intro? */
 export async function GET() {
   return handle(async () => {

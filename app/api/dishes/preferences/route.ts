@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { collections } from "@/lib/models";
 import { handle, requireUserId } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
+
 /** GET /api/dishes/preferences — distinct recently-liked dish names. */
 export async function GET() {
   return handle(async () => {
