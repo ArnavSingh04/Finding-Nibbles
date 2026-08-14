@@ -33,3 +33,6 @@ gcp-*.json
 
 # typescript
 *.tsbuildinfo
+
+# assistant-local memory (not part of the app)
+memory/
