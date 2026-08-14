@@ -18,20 +18,24 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        username: { label: "Username", type: "text" },
+        identifier: { label: "Username or email", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) {
-          throw new Error("Please enter both username and password");
+        if (!credentials?.identifier || !credentials?.password) {
+          throw new Error("Please enter your username or email and password");
         }
         await ensureIndexes();
         const users = await collections.users();
-        const user = await users.findOne({ username: credentials.username.trim() });
-        if (!user) throw new Error("Incorrect username or password");
+        // Accept either the username or the email address as the identifier.
+        const id = credentials.identifier.trim();
+        const user = await users.findOne({
+          $or: [{ username: id }, { email: id.toLowerCase() }],
+        });
+        if (!user) throw new Error("Incorrect username/email or password");
 
         const ok = await bcrypt.compare(credentials.password, user.passwordHash);
-        if (!ok) throw new Error("Incorrect username or password");
+        if (!ok) throw new Error("Incorrect username/email or password");
 
         return {
           id: user._id!,

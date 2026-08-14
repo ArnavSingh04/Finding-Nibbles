@@ -7,21 +7,21 @@ import { signIn } from "next-auth/react";
 import { toast } from "react-toastify";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async () => {
-    if (!username || !password) {
-      setError("Please enter both username and password");
+    if (!identifier || !password) {
+      setError("Please enter your username/email and password");
       return;
     }
     try {
       setError("");
       setLoading(true);
-      const res = await signIn("credentials", { username, password, redirect: false });
+      const res = await signIn("credentials", { identifier, password, redirect: false });
       if (res?.error) {
         setError(res.error);
         return;
@@ -51,9 +51,9 @@ export default function LoginPage() {
         <div className="flex flex-col gap-4">
           <input
             type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Username or email"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             onKeyPress={handleKeyPress}
             className="w-full px-4 py-3 backdrop-blur-lg bg-white/10 rounded-lg border border-white/30 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#C47B4D] focus:bg-white/20 transition-all duration-200"
             required

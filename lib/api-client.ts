@@ -55,8 +55,8 @@ export interface DishSuggestion {
 
 export const api = {
   auth: {
-    register: (username: string, password: string, name?: string) =>
-      post<{ ok: boolean }>("/api/auth/register", { username, password, name }),
+    register: (username: string, email: string, password: string, name?: string) =>
+      post<{ ok: boolean }>("/api/auth/register", { username, email, password, name }),
   },
 
   users: {

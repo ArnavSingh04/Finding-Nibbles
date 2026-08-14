@@ -10,6 +10,7 @@ import { getDb } from "./db";
 export interface UserDoc {
   _id?: string;
   username: string;
+  email?: string;
   passwordHash: string;
   profile?: {
     name?: string;
@@ -179,6 +180,12 @@ export async function ensureIndexes(): Promise<void> {
     const db = await getDb();
     await Promise.all([
       db.collection("users").createIndex({ username: 1 }, { unique: true }),
+      db
+        .collection("users")
+        .createIndex(
+          { email: 1 },
+          { unique: true, partialFilterExpression: { email: { $type: "string" } } }
+        ),
       db
         .collection("searchHistory")
         .createIndex({ userId: 1, searchTerm: 1 }, { unique: true, name: "userId_1_searchTerm_1" }),

@@ -45,10 +45,10 @@ export default function RegisterPage() {
     setLoading(true);
     setError("");
     try {
-      await api.auth.register(username, password, username);
+      await api.auth.register(username, email, password, username);
       toast.success("Registered successfully");
       // Log the new user straight in, then send them to the app.
-      const res = await signIn("credentials", { username, password, redirect: false });
+      const res = await signIn("credentials", { identifier: username, password, redirect: false });
       if (res?.error) {
         router.push("/login");
       } else {
