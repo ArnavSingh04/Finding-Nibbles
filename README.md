@@ -15,7 +15,7 @@ original Meteor application.
 | Maps | `@react-google-maps/api` (Google Maps & Places) |
 | Auth | **NextAuth (Auth.js)** — Credentials provider, bcrypt, JWT sessions |
 | Database | **MongoDB** (official `mongodb` driver) |
-| AI | Google Vertex AI (dish suggestions), Hugging Face SDXL (image generation) |
+| AI | Google Gemini API (dish suggestions), Hugging Face SDXL (image generation) |
 
 ## Architecture
 
@@ -26,7 +26,7 @@ finding-nibbles-next/
 │   │   ├── auth/            # NextAuth + register
 │   │   ├── users/ dishes/ onboarding/
 │   │   ├── plans/ meals/ saved-dishes/ saved-restaurants/ search-history/
-│   │   ├── ai-suggestion/   # Vertex AI (was /api/aiSuggestion)
+│   │   ├── ai-suggestion/   # Gemini API (was /api/aiSuggestion)
 │   │   └── generate-image/  # Hugging Face (was /api/generateImage)
 │   ├── (pages)/             # map, discover, meal-planner, profile, travel-plans, …
 │   ├── layout.tsx           # root layout + providers + NavBar
@@ -39,7 +39,7 @@ finding-nibbles-next/
 │   ├── api-client.ts        # typed browser client — replaces Meteor.call
 │   ├── hooks.ts             # useResource — replaces useTracker/subscribe
 │   ├── useCurrentUser.ts    # replaces Meteor.user()/userId()
-│   └── vertex.ts            # Vertex AI model factory
+│   └── gemini.ts            # Gemini API model factory
 ├── scripts/seed.ts          # seed a demo user
 └── middleware.ts            # protects authenticated routes
 ```
@@ -77,7 +77,7 @@ All third-party keys are placeholders in `.env.example`. Required for full funct
 - `MONGODB_URI` — your MongoDB connection string
 - `NEXTAUTH_SECRET` — `openssl rand -base64 32`
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` — Google Maps/Places (client-side)
-- `GOOGLE_CLOUD_PROJECT` + service-account credentials — Vertex AI (dish suggestions)
+- `GEMINI_API_KEY` — Google AI Studio API key for dish suggestions (https://aistudio.google.com/apikey)
 - `HF_TOKEN` — Hugging Face access token (image generation)
 
 > The AI endpoints **gracefully fall back to mock data** when their keys are missing or
@@ -104,7 +104,7 @@ npm run typecheck   # tsc --noEmit
 - Real secrets live only in `.env.local`, which is git-ignored. Never commit them.
 - Passwords are bcrypt-hashed; sessions are stateless JWTs signed with `NEXTAUTH_SECRET`.
 - The Google Maps key is public (browser-exposed) — restrict it by HTTP referrer in GCP.
-- Server-only secrets (Mongo URI, Vertex credentials, HF token) are never sent to the client.
+- Server-only secrets (Mongo URI, Gemini API key, HF token) are never sent to the client.
 
 ## Deployment
 Deploy as a standard Next.js app (e.g. Vercel, or `npm run build && npm run start` behind a

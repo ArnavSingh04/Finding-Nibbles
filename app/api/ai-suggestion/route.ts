@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { collections } from "@/lib/models";
 import { getUserId } from "@/lib/session";
-import { getVertexModel } from "@/lib/vertex";
+import { getGeminiModel } from "@/lib/gemini";
 import { MOCK_DISHES, MOCK_OCCASION_MENU } from "@/lib/mockData";
 
 export const runtime = "nodejs";
@@ -118,12 +118,9 @@ export async function POST(req: NextRequest) {
         : 'Output example: [{"name":"Margherita Pizza","description":"A classic Neapolitan pizza..."}]. Prefer common but authentic dishes where appropriate.',
     ].join("\n");
 
-    const model = getVertexModel();
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: finalPrompt }] }],
-    });
-    const rawText =
-      result.response?.candidates?.[0]?.content?.parts?.[0]?.text || "No suggestion generated.";
+    const model = getGeminiModel();
+    const result = await model.generateContent(finalPrompt);
+    const rawText = result.response.text() || "No suggestion generated.";
 
     const cleaned = rawText.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(cleaned);
