@@ -17,7 +17,7 @@ interface ConfirmOptions {
 }
 
 /**
- * Promise-based confirm dialog — a real replacement for window.confirm().
+ * Promise-based confirm dialog - a real replacement for window.confirm().
  * Usage:
  *   const { confirm, dialog } = useConfirm();
  *   ...

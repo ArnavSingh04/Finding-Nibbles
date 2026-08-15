@@ -4,7 +4,7 @@ import { handle, requireUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/meals — all meals for the current user. */
+/** GET /api/meals - all meals for the current user. */
 export async function GET() {
   return handle(async () => {
     const userId = await requireUserId();
@@ -14,7 +14,7 @@ export async function GET() {
   });
 }
 
-/** POST /api/meals — log a meal. */
+/** POST /api/meals - log a meal. */
 export async function POST(req: NextRequest) {
   return handle(async () => {
     const userId = await requireUserId();

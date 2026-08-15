@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { collections } from "@/lib/models";
 import { handle, requireUserId } from "@/lib/session";
 
-/** POST /api/plans/[id]/restaurants — add a restaurant to a plan (set-union). */
+/** POST /api/plans/[id]/restaurants - add a restaurant to a plan (set-union). */
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   return handle(async () => {
     const userId = await requireUserId();

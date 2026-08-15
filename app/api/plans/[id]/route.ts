@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { collections } from "@/lib/models";
 import { ApiError, handle, requireUserId } from "@/lib/session";
 
-/** GET /api/plans/[id] — a single plan owned by the user. */
+/** GET /api/plans/[id] - a single plan owned by the user. */
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   return handle(async () => {
     const userId = await requireUserId();
@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   });
 }
 
-/** PUT /api/plans/[id] — replace plan fields. */
+/** PUT /api/plans/[id] - replace plan fields. */
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   return handle(async () => {
     const userId = await requireUserId();

@@ -840,7 +840,7 @@ function MealStat({
         {label}
       </div>
       <div className="font-bold text-[var(--text)]">
-        {value != null ? `${value} ${unit}` : "—"}
+        {value != null ? `${value} ${unit}` : "-"}
       </div>
     </div>
   );

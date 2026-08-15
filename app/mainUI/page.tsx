@@ -15,7 +15,7 @@ const FLOATERS = [
 ];
 
 const FEATURES = [
-  { emoji: "🎲", title: "Roll for it", body: "Can't decide? Let the dice — and a little AI — pick your next meal." },
+  { emoji: "🎲", title: "Roll for it", body: "Can't decide? Let the dice - and a little AI - pick your next meal." },
   { emoji: "📍", title: "Find it nearby", body: "Real restaurants around you, filtered by cuisine, rating and diet." },
   { emoji: "🥗", title: "Eat on track", body: "Log meals, watch calories and macros, and plan the week ahead." },
 ];
@@ -67,7 +67,7 @@ export default function Landing() {
             href="/register"
             className="rounded-full bg-sunset px-7 py-3.5 text-base font-extrabold text-white shadow-[var(--shadow-md)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lg)]"
           >
-            Start nibbling — it&rsquo;s free
+            Start nibbling - it&rsquo;s free
           </Link>
           <Link
             href="/login"

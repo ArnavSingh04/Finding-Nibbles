@@ -9,24 +9,23 @@ import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import {
   TextField,
   Button,
   IconButton,
   Tooltip,
 } from "@mui/material";
-import { Autocomplete, useJsApiLoader } from "@react-google-maps/api";
+import { Autocomplete } from "@react-google-maps/api";
 import { toast } from "react-toastify";
 import { api } from "@/lib/api-client";
 import { useResource } from "@/lib/hooks";
+import { useGoogleMaps } from "@/lib/useGoogleMaps";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GradientButton } from "@/components/ui/GradientButton";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
-
-// Keep libraries as a module-level const array to avoid reload warnings.
-const GOOGLE_LIBRARIES: "places"[] = ["places"];
 
 const getRestaurantName = (r: any) =>
   r?.displayName?.text || r?.name || "Unnamed restaurant";
@@ -42,16 +41,10 @@ export default function PlanDetailsPage() {
   const router = useRouter();
   const { confirm, dialog } = useConfirm();
 
-  // Only load the Maps SDK when a key is configured — calling the loader with an
-  // undefined key throws and blocks the whole page.
-  const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: mapsApiKey ?? "",
-    libraries: GOOGLE_LIBRARIES,
-    // Skip the network request entirely if there is no key.
-    preventGoogleFontsLoading: true,
-  });
-  const autocompleteReady = isLoaded && !!mapsApiKey;
+  // Shared Maps loader (same options everywhere, so navigating between
+  // map-using pages never re-initialises the loader with different options).
+  const { isLoaded, hasKey } = useGoogleMaps();
+  const autocompleteReady = isLoaded && hasKey;
 
   const { data: plan, loading, error, refetch } = useResource(
     () => api.plans.get(planId),
@@ -67,6 +60,8 @@ export default function PlanDetailsPage() {
   const [tripStartDate, setTripStartDate] = useState("");
   const startAutocompleteRef = useRef<any>(null);
   const destAutocompleteRef = useRef<any>(null);
+  const addRestoRef = useRef<any>(null);
+  const [addRestoValue, setAddRestoValue] = useState("");
 
   const syncFromPlan = React.useCallback(() => {
     if (!plan) return;
@@ -139,6 +134,25 @@ export default function PlanDetailsPage() {
     });
     if (!ok) return;
     setRestaurants((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleAddRestaurant = () => {
+    const place = addRestoRef.current?.getPlace?.();
+    const name = place?.name || place?.formatted_address || addRestoValue.trim();
+    if (!name) {
+      toast.error("Search for a restaurant to add");
+      return;
+    }
+    const entry: any = { name };
+    if (place?.place_id) entry.placeId = place.place_id;
+    if (place?.formatted_address) entry.location = place.formatted_address;
+    if (place?.geometry?.location) {
+      entry.latitude = place.geometry.location.lat();
+      entry.longitude = place.geometry.location.lng();
+    }
+    setRestaurants((prev) => [...prev, entry]);
+    setAddRestoValue("");
+    toast.success(`Added ${name}. Save the trip to keep it.`);
   };
 
   const onPlaceChangedStart = () => {
@@ -287,8 +301,7 @@ export default function PlanDetailsPage() {
           <div className="flex flex-col gap-3">
             {restaurants.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--bg)] px-4 py-8 text-center text-sm italic text-[var(--text-muted)]">
-                No stops yet. Add restaurants from the explore page or your saved
-                list.
+                No stops yet. {isEditing ? "Search below to add your first restaurant." : "Tap Edit trip to start adding restaurants."}
               </div>
             ) : (
               restaurants.map((r, idx) => (
@@ -353,6 +366,48 @@ export default function PlanDetailsPage() {
               ))
             )}
           </div>
+
+          {isEditing && (
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              {autocompleteReady ? (
+                <Autocomplete
+                  onLoad={(a) => (addRestoRef.current = a)}
+                  onPlaceChanged={handleAddRestaurant}
+                  className="flex-1"
+                >
+                  <TextField
+                    size="small"
+                    fullWidth
+                    placeholder="Search a restaurant to add"
+                    value={addRestoValue}
+                    onChange={(e) => setAddRestoValue(e.target.value)}
+                  />
+                </Autocomplete>
+              ) : (
+                <TextField
+                  size="small"
+                  fullWidth
+                  placeholder="Add a restaurant by name"
+                  value={addRestoValue}
+                  onChange={(e) => setAddRestoValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddRestaurant();
+                    }
+                  }}
+                />
+              )}
+              <Button
+                variant="outlined"
+                onClick={handleAddRestaurant}
+                startIcon={<AddRoundedIcon />}
+                sx={{ textTransform: "none", fontWeight: 700 }}
+              >
+                Add stop
+              </Button>
+            </div>
+          )}
         </div>
 
         {renderLocationField(

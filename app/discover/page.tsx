@@ -27,7 +27,7 @@ import { DietBadge, Tag, type DietKey } from "@/components/ui/DietBadge";
 
 const DIET_KEYS: DietKey[] = ["vegetarian", "vegan", "glutenFree", "dairyFree", "halal"];
 
-// Internal card shape — carries the rich AI fields through the pipeline.
+// Internal card shape - carries the rich AI fields through the pipeline.
 type Dish = {
   id: number;
   name: string;
@@ -39,7 +39,7 @@ type Dish = {
   dietary?: DishSuggestion["dietary"];
 };
 
-/** today's date as dd/mm/yyyy — matches MealType.date format. */
+/** today's date as dd/mm/yyyy - matches MealType.date format. */
 function todayKey() {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -148,7 +148,7 @@ const DishCard = ({
 
         {n?.calories != null && (
           <div className="mt-3 border-t border-[var(--border)] pt-3 text-xs font-bold text-[var(--text-muted)]">
-            🔥 {n.calories} kcal · P {n.protein ?? "—"}g · C {n.carbs ?? "—"}g · F {n.fat ?? "—"}g
+            🔥 {n.calories} kcal · P {n.protein ?? "-"}g · C {n.carbs ?? "-"}g · F {n.fat ?? "-"}g
           </div>
         )}
 
@@ -522,7 +522,7 @@ export default function DiscoverPage() {
       {/* Try New */}
       <SectionShell
         title="Try something new"
-        subtitle="Dishes just outside your usual — dial the adventure up or down."
+        subtitle="Dishes just outside your usual - dial the adventure up or down."
         action={
           <Button
             variant="outlined"

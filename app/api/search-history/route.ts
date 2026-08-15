@@ -8,7 +8,7 @@ function normalizeTerm(s: string) {
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/search-history — user's search terms, newest first. */
+/** GET /api/search-history - user's search terms, newest first. */
 export async function GET() {
   return handle(async () => {
     const userId = await requireUserId();
@@ -20,7 +20,7 @@ export async function GET() {
   });
 }
 
-/** POST /api/search-history — upsert a search term. */
+/** POST /api/search-history - upsert a search term. */
 export async function POST(req: NextRequest) {
   return handle(async () => {
     const userId = await requireUserId();
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   });
 }
 
-/** DELETE /api/search-history — remove a single search term. */
+/** DELETE /api/search-history - remove a single search term. */
 export async function DELETE(req: NextRequest) {
   return handle(async () => {
     const userId = await requireUserId();

@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from "next";
+import { getServerSession } from "next-auth";
 import "./globals.css";
 import { fontVariables } from "./fonts";
+import { authOptions } from "@/lib/auth";
 import { Providers } from "./providers";
 import { NavBar } from "@/components/layouts/NavBar";
 
 export const metadata: Metadata = {
   title: {
-    default: "Finding Nibbles — decide what to eat, deliciously",
+    default: "Finding Nibbles - decide what to eat, deliciously",
     template: "%s · Finding Nibbles",
   },
   description:
@@ -22,11 +24,12 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await getServerSession(authOptions);
   return (
     <html lang="en" className={fontVariables} suppressHydrationWarning>
       <body>
-        <Providers>
+        <Providers session={session}>
           <div className="min-h-screen">
             <NavBar />
             <main>{children}</main>

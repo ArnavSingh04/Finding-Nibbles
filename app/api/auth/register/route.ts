@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { collections, ensureIndexes, randomId } from "@/lib/models";
 import { ApiError, handle } from "@/lib/session";
 
-/** POST /api/auth/register — replaces Meteor's Accounts.createUser. */
+/** POST /api/auth/register - replaces Meteor's Accounts.createUser. */
 export async function POST(req: NextRequest) {
   return handle(async () => {
     const { username, email, password, name } = await req.json();

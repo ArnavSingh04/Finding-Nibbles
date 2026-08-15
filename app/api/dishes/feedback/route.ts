@@ -4,7 +4,7 @@ import { handle, requireUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/dishes/feedback — likes, dislikes and recent searches for AI context. */
+/** GET /api/dishes/feedback - likes, dislikes and recent searches for AI context. */
 export async function GET() {
   return handle(async () => {
     const userId = await requireUserId();

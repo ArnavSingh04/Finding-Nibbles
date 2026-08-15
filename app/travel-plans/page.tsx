@@ -79,7 +79,7 @@ export default function SavedPlansPage() {
       <PageHeader
         eyebrow="Travel plans"
         title="Your food trips"
-        subtitle="Plan a route through the places you want to eat — one trip per city, adventure, or weekend away."
+        subtitle="Plan a route through the places you want to eat - one trip per city, adventure, or weekend away."
         action={plans.length > 0 ? createButton : undefined}
       />
 

@@ -257,7 +257,7 @@ export default function TravelPlanningPage() {
           Your saved restaurants
         </h2>
         <p className="mt-1 mb-6 text-[var(--text-muted)]">
-          Places you bookmarked while searching — add them to a trip anytime.
+          Places you bookmarked while searching - add them to a trip anytime.
         </p>
 
         {restaurantsLoading ? (

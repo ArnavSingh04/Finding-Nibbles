@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 
 /**
  * Gemini text generation via the current `@google/genai` SDK and a Google AI
- * Studio API key (`GEMINI_API_KEY`). This is the API-key product — not Vertex AI.
+ * Studio API key (`GEMINI_API_KEY`). This is the API-key product - not Vertex AI.
  *
  * The default model is `gemini-flash-latest`, an auto-updating alias, so the app
  * keeps working when Google retires specific pinned model versions. Override with

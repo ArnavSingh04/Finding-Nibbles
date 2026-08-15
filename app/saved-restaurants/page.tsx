@@ -80,7 +80,7 @@ export default function SavedRestaurantsPage() {
         <EmptyState
           emoji="🍽️"
           title="No saved restaurants yet"
-          message="Explore the map and bookmark places you'd love to try — they'll show up here."
+          message="Explore the map and bookmark places you'd love to try - they'll show up here."
           action={
             <Link href="/map">
               <GradientButton startIcon={<MapRoundedIcon />}>

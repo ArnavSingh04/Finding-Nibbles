@@ -4,7 +4,7 @@ import { ApiError, handle, requireUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/plans — all plans for the current user. */
+/** GET /api/plans - all plans for the current user. */
 export async function GET() {
   return handle(async () => {
     const userId = await requireUserId();
@@ -14,7 +14,7 @@ export async function GET() {
   });
 }
 
-/** POST /api/plans — create a new (empty) plan. */
+/** POST /api/plans - create a new (empty) plan. */
 export async function POST(req: NextRequest) {
   return handle(async () => {
     const userId = await requireUserId();

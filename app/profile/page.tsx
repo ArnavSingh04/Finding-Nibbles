@@ -350,7 +350,7 @@ export default function ProfilePage() {
             <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-3">
               {preferences.length === 0 && (
                 <span className="text-sm italic text-[var(--text-muted)]">
-                  No preferences yet — add a few to sharpen your suggestions.
+                  No preferences yet - add a few to sharpen your suggestions.
                 </span>
               )}
               {preferences.map((pref) => (

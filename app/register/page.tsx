@@ -46,7 +46,7 @@ export default function RegisterPage() {
     setError("");
     try {
       await api.auth.register(username, email, password, username);
-      toast.success("Account created — welcome to the table!");
+      toast.success("Account created - welcome to the table!");
       const res = await signIn("credentials", { identifier: username, password, redirect: false });
       if (res?.error) {
         router.push("/login");
@@ -68,7 +68,7 @@ export default function RegisterPage() {
   return (
     <AuthShell
       title="Create your account"
-      subtitle="Two minutes to a tastier decision — no credit card, no fuss."
+      subtitle="Two minutes to a tastier decision - no credit card, no fuss."
       footer={
         <>
           Already have an account?{" "}

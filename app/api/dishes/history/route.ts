@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { collections } from "@/lib/models";
 import { handle, requireUserId } from "@/lib/session";
 
-/** DELETE /api/dishes/history — clear all of the user's swipe history. */
+/** DELETE /api/dishes/history - clear all of the user's swipe history. */
 export async function DELETE() {
   return handle(async () => {
     const userId = await requireUserId();

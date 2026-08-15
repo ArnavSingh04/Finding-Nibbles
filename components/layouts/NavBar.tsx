@@ -34,7 +34,7 @@ const DRAWER_LINKS = [
 export const NavBar = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { isLoggedIn, user, userName } = useCurrentUser();
+  const { isLoggedIn, user, userName, status } = useCurrentUser();
   const [drawer, setDrawer] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -45,7 +45,7 @@ export const NavBar = () => {
   const handleLogout = async () => {
     setDrawer(false);
     await signOut({ redirect: false });
-    toast.success("Logged out — see you soon!");
+    toast.success("Logged out - see you soon!");
     router.push("/login");
   };
 
@@ -90,31 +90,29 @@ export const NavBar = () => {
           {/* Right actions */}
           <div className="flex items-center gap-1.5">
             <ThemeToggle />
-            {!isLoggedIn ? (
-              !bare && (
-                <>
-                  <Link href="/login" className="rounded-full px-3 py-2 text-sm font-bold text-[var(--text-muted)] hover:text-[var(--text)]">
-                    Log in
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="rounded-full bg-sunset px-4 py-2 text-sm font-extrabold text-white shadow-[var(--shadow-sm)] hover:brightness-105"
-                  >
-                    Sign up
-                  </Link>
-                </>
-              )
+            {/* While auth is still unknown, render nothing here so the bar
+                doesn't flip between logged-out and logged-in states. */}
+            {bare || status === "loading" ? null : !isLoggedIn ? (
+              <>
+                <Link href="/login" className="rounded-full px-3 py-2 text-sm font-bold text-[var(--text-muted)] hover:text-[var(--text)]">
+                  Log in
+                </Link>
+                <Link
+                  href="/register"
+                  className="rounded-full bg-sunset px-4 py-2 text-sm font-extrabold text-white shadow-[var(--shadow-sm)] hover:brightness-105"
+                >
+                  Sign up
+                </Link>
+              </>
             ) : (
               <>
-                {!bare && (
-                  <button
-                    onClick={() => setMobileOpen((v) => !v)}
-                    className="grid h-9 w-9 place-items-center rounded-full text-[var(--text)] hover:bg-[var(--bg)] md:hidden"
-                    aria-label="Toggle menu"
-                  >
-                    {mobileOpen ? <CloseRoundedIcon fontSize="small" /> : <MenuRoundedIcon fontSize="small" />}
-                  </button>
-                )}
+                <button
+                  onClick={() => setMobileOpen((v) => !v)}
+                  className="grid h-9 w-9 place-items-center rounded-full text-[var(--text)] hover:bg-[var(--bg)] md:hidden"
+                  aria-label="Toggle menu"
+                >
+                  {mobileOpen ? <CloseRoundedIcon fontSize="small" /> : <MenuRoundedIcon fontSize="small" />}
+                </button>
                 <button
                   onClick={() => setDrawer(true)}
                   className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg)] py-1 pl-1 pr-3 hover:shadow-[var(--shadow-sm)]"

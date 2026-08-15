@@ -21,7 +21,7 @@ function fallbackImage(): string {
   return MOCK_DISHES[Math.floor(Math.random() * MOCK_DISHES.length)].imageUrl;
 }
 
-/** POST /api/generate-image — SDXL image generation with mock fallback. */
+/** POST /api/generate-image - SDXL image generation with mock fallback. */
 export async function POST(req: NextRequest) {
   try {
     const { prompt } = await req.json();

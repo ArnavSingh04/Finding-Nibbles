@@ -18,7 +18,7 @@ function parsePreferences(preferences?: string | string[]): string[] {
   }
 }
 
-/** POST /api/ai-suggestion — personalised dish / occasion-menu suggestions. */
+/** POST /api/ai-suggestion - personalised dish / occasion-menu suggestions. */
 export async function POST(req: NextRequest) {
   let mode: string | undefined;
   try {
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       "Return ONLY a valid JSON array of up to 5 items.",
       'Each item MUST have keys: "name" (string), "description" (string, 1 sentence),',
       '"cuisine" (string), "why" (string, one short sentence on why it suits THIS user),',
-      '"nutrition" (object with numeric "calories","protein","carbs","fat" — best estimate per serving),',
+      '"nutrition" (object with numeric "calories","protein","carbs","fat" - best estimate per serving),',
       'and "dietary" (object with boolean "vegetarian","vegan","glutenFree","dairyFree","halal").',
       "No markdown, no code fences, no extra commentary.",
       "Do NOT include tokens, IDs, counters, tags, or suffixes in names; names must be plain dish names.",

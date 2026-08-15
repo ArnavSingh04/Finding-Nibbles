@@ -4,7 +4,7 @@ import { ApiError, handle, requireUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/saved-dishes — user's saved dishes, newest first. */
+/** GET /api/saved-dishes - user's saved dishes, newest first. */
 export async function GET() {
   return handle(async () => {
     const userId = await requireUserId();
@@ -14,7 +14,7 @@ export async function GET() {
   });
 }
 
-/** POST /api/saved-dishes — save a dish for a city (unique per user). */
+/** POST /api/saved-dishes - save a dish for a city (unique per user). */
 export async function POST(req: NextRequest) {
   return handle(async () => {
     const userId = await requireUserId();

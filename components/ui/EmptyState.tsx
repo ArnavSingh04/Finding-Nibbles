@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-/** Friendly empty state — an invitation to act, not just a blank screen. */
+/** Friendly empty state - an invitation to act, not just a blank screen. */
 export function EmptyState({
   emoji = "🍽️",
   title,

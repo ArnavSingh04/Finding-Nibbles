@@ -27,7 +27,7 @@ function todayKey() {
 }
 
 const QUICK_ACTIONS = [
-  { href: "/discover", icon: CasinoRoundedIcon, title: "Roll the dice", body: "Surprise me with a dish", accent: true },
+  { href: "/map?dice=1", icon: CasinoRoundedIcon, title: "Roll the dice", body: "Let the map pick a cuisine", accent: true },
   { href: "/map", icon: MapRoundedIcon, title: "Find nearby", body: "Restaurants around you" },
   { href: "/meal-planner", icon: RestaurantMenuRoundedIcon, title: "Log a meal", body: "Track today's food" },
   { href: "/travel-plans", icon: LuggageRoundedIcon, title: "Plan a trip", body: "Build a food itinerary" },
@@ -99,7 +99,7 @@ export default function Dashboard() {
       <div className="mb-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           emoji="🔥"
-          value={goal ? `${caloriesToday}` : caloriesToday || "—"}
+          value={goal ? `${caloriesToday}` : caloriesToday || "-"}
           label="Calories today"
           hint={goal ? `of ${goal} goal` : "Set a goal in Profile"}
         />
@@ -145,7 +145,7 @@ export default function Dashboard() {
               </div>
               {d.nutrition?.calories != null && (
                 <div className="mt-3 border-t border-[var(--border)] pt-3 text-xs font-bold text-[var(--text-muted)]">
-                  🔥 {d.nutrition.calories} kcal · P {d.nutrition.protein ?? "—"}g · C {d.nutrition.carbs ?? "—"}g · F {d.nutrition.fat ?? "—"}g
+                  🔥 {d.nutrition.calories} kcal · P {d.nutrition.protein ?? "-"}g · C {d.nutrition.carbs ?? "-"}g · F {d.nutrition.fat ?? "-"}g
                 </div>
               )}
             </article>

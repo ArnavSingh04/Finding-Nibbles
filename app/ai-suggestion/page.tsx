@@ -29,7 +29,7 @@ const OCCASIONS = [
   { value: "celebration", label: "Celebration" },
 ];
 
-/** today's date as dd/mm/yyyy — matches MealType.date format. */
+/** today's date as dd/mm/yyyy - matches MealType.date format. */
 function todayKey() {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -102,7 +102,7 @@ function DishResultCard({ dish }: { dish: SuggestedDish }) {
 
         {n?.calories != null && (
           <div className="mt-3 border-t border-[var(--border)] pt-3 text-xs font-bold text-[var(--text-muted)]">
-            🔥 {n.calories} kcal · P {n.protein ?? "—"}g · C {n.carbs ?? "—"}g · F {n.fat ?? "—"}g
+            🔥 {n.calories} kcal · P {n.protein ?? "-"}g · C {n.carbs ?? "-"}g · F {n.fat ?? "-"}g
           </div>
         )}
 
@@ -191,7 +191,7 @@ export default function AiSuggestionPage() {
             AI dish <span className="text-gradient">suggestions</span>
           </>
         }
-        subtitle="Tell us the vibe and we'll plate up ideas — with the why, the macros, and one tap to add them to today's plan."
+        subtitle="Tell us the vibe and we'll plate up ideas - with the why, the macros, and one tap to add them to today's plan."
         action={
           <GradientButton
             startIcon={<AutoAwesomeRoundedIcon />}

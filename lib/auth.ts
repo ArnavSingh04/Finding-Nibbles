@@ -50,6 +50,9 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.uid = (user as any).id;
         token.username = (user as any).username;
+        // Carry the display name so the UI can show it on the first render,
+        // before /api/users/me resolves.
+        token.name = (user as any).name ?? (user as any).username;
       }
       return token;
     },

@@ -118,7 +118,7 @@ export const AddToPlanModal: React.FC<AddToPlanModalProps> = ({
         <div>
           {userPlans.length === 0 ? (
             <Typography sx={{ color: "text.secondary", fontStyle: "italic", py: 1 }}>
-              No trips yet — create your first one above.
+              No trips yet - create your first one above.
             </Typography>
           ) : (
             userPlans.map((plan, idx) => {

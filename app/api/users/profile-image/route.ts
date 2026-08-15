@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { collections } from "@/lib/models";
 import { ApiError, handle, requireUserId } from "@/lib/session";
 
-/** POST /api/users/profile-image — store a base64 profile image as a data URL. */
+/** POST /api/users/profile-image - store a base64 profile image as a data URL. */
 export async function POST(req: NextRequest) {
   return handle(async () => {
     const userId = await requireUserId();

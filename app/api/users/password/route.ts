@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { collections } from "@/lib/models";
 import { ApiError, handle, requireUserId } from "@/lib/session";
 
-/** POST /api/users/password — change the current user's password. */
+/** POST /api/users/password - change the current user's password. */
 export async function POST(req: NextRequest) {
   return handle(async () => {
     const userId = await requireUserId();

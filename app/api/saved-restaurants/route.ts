@@ -4,7 +4,7 @@ import { ApiError, handle, requireUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/saved-restaurants — user's saved restaurants, newest first. */
+/** GET /api/saved-restaurants - user's saved restaurants, newest first. */
 export async function GET() {
   return handle(async () => {
     const userId = await requireUserId();
@@ -16,7 +16,7 @@ export async function GET() {
   });
 }
 
-/** POST /api/saved-restaurants — upsert a saved restaurant (unique per placeId). */
+/** POST /api/saved-restaurants - upsert a saved restaurant (unique per placeId). */
 export async function POST(req: NextRequest) {
   return handle(async () => {
     const userId = await requireUserId();
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   });
 }
 
-/** DELETE /api/saved-restaurants — remove a saved restaurant by placeId. */
+/** DELETE /api/saved-restaurants - remove a saved restaurant by placeId. */
 export async function DELETE(req: NextRequest) {
   return handle(async () => {
     const userId = await requireUserId();

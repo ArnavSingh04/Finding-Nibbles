@@ -7,7 +7,6 @@ import {
   Circle,
   Autocomplete,
   InfoWindow,
-  useJsApiLoader,
 } from "@react-google-maps/api";
 import { toast } from "react-toastify";
 import Box from "@mui/material/Box";
@@ -39,11 +38,8 @@ import { AddToPlanModal } from "@/components/plans/AddToPlanModal";
 import { api } from "@/lib/api-client";
 import { useResource } from "@/lib/hooks";
 import { useCurrentUser } from "@/lib/useCurrentUser";
+import { useGoogleMaps } from "@/lib/useGoogleMaps";
 import type { ISavedRestaurant, PlanType } from "@/lib/models";
-
-// Keep the Google Maps libraries array as a module-level const so the loader
-// doesn't warn about the array changing identity between renders.
-const LIBRARIES: "places"[] = ["places"];
 
 type SaveRestaurantInput = Omit<ISavedRestaurant, "userId" | "_id" | "createdAt">;
 
@@ -122,10 +118,7 @@ export const MapScreen = () => {
   const [isAddToPlanOpen, setIsAddToPlanOpen] = useState(false);
 
   // Google Maps JS API loader (replaces the <LoadScript> tag).
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries: LIBRARIES,
-  });
+  const { isLoaded } = useGoogleMaps();
 
   // Show swipe popup on login (when Map loads), only once per session
   useEffect(() => {
@@ -303,11 +296,21 @@ export const MapScreen = () => {
         map.panTo(next);
         saveSearchTerm(q);
       } else {
-        toast.info(`Couldn't locate “${q}” — try searching again.`);
+        toast.info(`Couldn't locate “${q}” - try searching again.`);
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, map]);
+
+  // Deep-link: arriving with ?dice=1 (e.g. from the dashboard) opens the roll.
+  const handledDiceRef = React.useRef(false);
+  useEffect(() => {
+    if (handledDiceRef.current) return;
+    if (new URLSearchParams(window.location.search).get("dice") === "1") {
+      handledDiceRef.current = true;
+      setIsDicePopupOpen(true);
+    }
+  }, []);
 
   useEffect(() => {
     const cuisineTypes = new Set<string>();
@@ -644,7 +647,7 @@ export const MapScreen = () => {
     [restaurants]
   );
 
-  // Central filter pipeline — applied to BOTH the map markers and the list.
+  // Central filter pipeline - applied to BOTH the map markers and the list.
   const visibleRestaurants = useMemo(() => {
     if (!userLocation) return [];
     return restaurants
@@ -668,7 +671,7 @@ export const MapScreen = () => {
         if (dist > radius) return false;
         // Minimum rating filter (unrated places pass only when no minimum is set)
         if (minRating > 0 && (restaurant.rating ?? 0) < minRating) return false;
-        // Open-now filter — only excludes places we KNOW are closed.
+        // Open-now filter - only excludes places we KNOW are closed.
         if (openNowOnly && restaurant.openNow === false) return false;
         return true;
       })
@@ -795,7 +798,7 @@ export const MapScreen = () => {
                     }}
                   >
                     <span style={{ color: "#e0a72c", fontWeight: 700 }}>
-                      ★ {selectedRestaurant.rating ?? "—"}
+                      ★ {selectedRestaurant.rating ?? "-"}
                     </span>
                     <span>·</span>
                     <span>{cuisineOf(selectedRestaurant)}</span>
@@ -976,7 +979,7 @@ export const MapScreen = () => {
                   </div>
                 </div>
 
-                {/* Open now — only shown when the data actually supports it */}
+                {/* Open now - only shown when the data actually supports it */}
                 {hasOpenNowData && (
                   <div className="flex items-center justify-between">
                     <div className="text-xs font-bold text-[var(--text-muted)]">

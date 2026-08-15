@@ -4,7 +4,7 @@ import { handle, requireUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/onboarding/swipe — has the user completed the swipe intro? */
+/** GET /api/onboarding/swipe - has the user completed the swipe intro? */
 export async function GET() {
   return handle(async () => {
     const userId = await requireUserId();
@@ -16,7 +16,7 @@ export async function GET() {
   });
 }
 
-/** POST /api/onboarding/swipe — mark the swipe intro complete. */
+/** POST /api/onboarding/swipe - mark the swipe intro complete. */
 export async function POST() {
   return handle(async () => {
     const userId = await requireUserId();
